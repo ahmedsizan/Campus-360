@@ -63,8 +63,8 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Quick Access Tiles */}
       <div>
-        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '1rem' }}>Campus Quick Services</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.85rem' }}>Campus Quick Services</h3>
+        <div className="grid-quick-services">
           <div 
             className="glass-card glass-card-interactive" 
             onClick={() => setActiveTab('cafeteria')}
