@@ -74,6 +74,12 @@ interface AppContextType {
   // Profile Modal
   isProfileModalOpen: boolean;
   setIsProfileModalOpen: (open: boolean) => void;
+
+  // PWA & App Install
+  isInstallModalOpen: boolean;
+  setIsInstallModalOpen: (open: boolean) => void;
+  triggerInstallApp: () => void;
+  isAppInstalled: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -102,6 +108,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Modals & Drawers
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // PWA App Installation State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
+  const [isAppInstalled, setIsAppInstalled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const triggerInstallApp = async () => {
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setIsAppInstalled(true);
+        }
+        setDeferredPrompt(null);
+      } catch (err) {
+        setIsInstallModalOpen(true);
+      }
+    } else {
+      setIsInstallModalOpen(true);
+    }
+  };
 
   // Toasts
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -600,6 +653,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeToast,
         isProfileModalOpen,
         setIsProfileModalOpen,
+        isInstallModalOpen,
+        setIsInstallModalOpen,
+        triggerInstallApp,
+        isAppInstalled,
       }}
     >
       {children}

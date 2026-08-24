@@ -5,6 +5,8 @@ import { Navbar } from './components/Navbar';
 import { CartDrawer } from './components/CartDrawer';
 import { ProfileModal } from './components/ProfileModal';
 import { ToastContainer } from './components/ToastContainer';
+import { InstallAppModal } from './components/InstallAppModal';
+import { InstallAppBanner } from './components/InstallAppBanner';
 import { Login } from './pages/Login';
 import { StudentDashboard } from './pages/Dashboards/StudentDashboard';
 import { TeacherDashboard } from './pages/Dashboards/TeacherDashboard';
@@ -97,6 +99,8 @@ const MainAppContent: React.FC = () => {
       <CartDrawer />
       <ProfileModal />
       <ToastContainer />
+      <InstallAppModal />
+      <InstallAppBanner />
 
       {/* Modern Footer */}
       <footer style={{

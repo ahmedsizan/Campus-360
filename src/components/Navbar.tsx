@@ -15,7 +15,8 @@ import {
   Search, 
   AlertCircle, 
   LayoutDashboard,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
@@ -30,7 +31,8 @@ export const Navbar: React.FC = () => {
     setActiveTab, 
     cartCount, 
     setIsCartOpen, 
-    setIsProfileModalOpen 
+    setIsProfileModalOpen,
+    triggerInstallApp
   } = useApp();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -276,6 +278,17 @@ export const Navbar: React.FC = () => {
                       className="btn-secondary"
                     >
                       <Settings size={16} /> Edit Info & Photo
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        triggerInstallApp();
+                        setIsUserDropdownOpen(false);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-green-light)', fontWeight: 600, textAlign: 'left', width: '100%' }}
+                      className="btn-secondary"
+                    >
+                      <Download size={16} color="var(--gub-green)" /> Install Mobile App
                     </button>
 
                     <button

@@ -11,11 +11,12 @@ import {
   Database, 
   HardDrive, 
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Download
 } from 'lucide-react';
 
 export const Settings: React.FC = () => {
-  const { theme, toggleTheme, addToast } = useApp();
+  const { theme, toggleTheme, addToast, triggerInstallApp } = useApp();
   const { profile } = useAuth();
 
   const [notifications, setNotifications] = useState({
@@ -130,6 +131,24 @@ export const Settings: React.FC = () => {
               />
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Mobile App Installation Card */}
+      <div className="glass-card" style={{ padding: '2rem', border: '1.5px solid rgba(16, 185, 129, 0.3)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Download size={20} color="var(--gub-green)" /> Install Mobile & Desktop App
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+              Install Campus 360 directly on your iPhone, Android, or PC for standalone full-screen usage.
+            </p>
+          </div>
+
+          <button className="btn btn-primary" onClick={triggerInstallApp}>
+            <Download size={16} /> Install App
+          </button>
         </div>
       </div>
 
