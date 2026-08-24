@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Direct Supabase Auth Sign Up
+  // Direct Supabase Auth Sign Up with Unique Student / University ID Check
   const signUp = async (
     email: string,
     password: string,
@@ -178,7 +178,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     try {
       const emailClean = email.toLowerCase().trim();
+      const idNoClean = idNo.trim();
 
+      if (!idNoClean) {
+        return { error: new Error('Please enter a valid University ID Number.') };
+      }
+
+      // 1. Check if University ID Number is already registered in Supabase
+      try {
+        const { data: existingWithId } = await supabase
+          .from('profiles')
+          .select('id, email, id_no, name')
+          .ilike('id_no', idNoClean)
+          .maybeSingle();
+
+        if (existingWithId) {
+          return { 
+            error: new Error(`University ID "${idNoClean}" is already registered. Each student/employee ID can only register one unique account.`) 
+          };
+        }
+      } catch (err) {
+        console.warn('ID uniqueness pre-check notice:', err);
+      }
+
+      // 2. Register user with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: emailClean,
         password,
@@ -187,7 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             role,
             department,
-            id_no: idNo,
+            id_no: idNoClean,
             avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
           }
         }
@@ -203,7 +226,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name,
           role,
           department,
-          id_no: idNo,
+          id_no: idNoClean,
           semester: 'Spring 2026',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
           bio: `${role === 'teacher' ? 'Faculty Member' : role === 'admin' ? 'Administrator' : 'Student'} at Green University of Bangladesh`,
@@ -215,7 +238,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('gub_user', JSON.stringify(newProf));
 
         // Insert row into Supabase profiles table
-        await supabase.from('profiles').upsert([newProf]);
+        const { error: profileError } = await supabase.from('profiles').upsert([newProf]);
+        if (profileError) {
+          console.error('Supabase profile insertion error:', profileError);
+        }
       }
 
       return { error: null };
@@ -232,10 +258,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
   };
 
-  // Update Profile on Supabase
+  // Update Profile on Supabase with Unique ID verification
   const updateProfile = async (data: Partial<UserProfile>) => {
     try {
       if (!profile) return { error: new Error('Not logged in') };
+
+      // If updating ID Number, verify uniqueness
+      if (data.id_no && data.id_no.trim() !== profile.id_no) {
+        const idClean = data.id_no.trim();
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('id, email, id_no')
+          .ilike('id_no', idClean)
+          .neq('id', profile.id)
+          .maybeSingle();
+
+        if (existing) {
+          return {
+            error: new Error(`University ID "${idClean}" is already in use by another account.`)
+          };
+        }
+      }
 
       const updated: UserProfile = {
         ...profile,

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   avatar TEXT,
   phone TEXT,
   department TEXT DEFAULT 'Computer Science & Engineering',
-  id_no TEXT,
+  id_no TEXT UNIQUE,
   semester TEXT DEFAULT 'Spring 2026',
   bio TEXT DEFAULT 'Student at Green University of Bangladesh',
   office_hours TEXT,
@@ -22,6 +22,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Unique index on student/employee ID Number (case-insensitive & whitespace-trimmed)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_id_no_unique 
+  ON public.profiles (LOWER(TRIM(id_no))) 
+  WHERE id_no IS NOT NULL AND TRIM(id_no) <> '';
 
 -- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
