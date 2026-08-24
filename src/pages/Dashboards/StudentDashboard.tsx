@@ -8,12 +8,13 @@ import {
   AlertCircle, 
   Search, 
   ArrowRight,
-  MapPin
+  MapPin,
+  Download
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
-  const { notices, buses, setActiveTab } = useApp();
+  const { notices, buses, setActiveTab, triggerInstallApp } = useApp();
 
   const activeBuses = buses.filter(b => b.status === 'active');
   const recentNotices = notices.slice(0, 3);
@@ -51,12 +52,15 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
           <button className="btn btn-primary" onClick={() => setActiveTab('cafeteria')}>
-            <Utensils size={18} /> Order Food
+            <Utensils size={17} /> Order Food
           </button>
           <button className="btn btn-secondary" onClick={() => setActiveTab('transport')}>
-            <Bus size={18} /> Track Bus
+            <Bus size={17} /> Track Bus
+          </button>
+          <button className="btn btn-outline" onClick={triggerInstallApp} style={{ borderColor: 'var(--gub-green)', color: 'var(--gub-green)' }}>
+            <Download size={17} /> Install App
           </button>
         </div>
       </div>

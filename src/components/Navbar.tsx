@@ -149,6 +149,27 @@ export const Navbar: React.FC = () => {
 
           {/* Right Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            {/* Install App Button */}
+            <button 
+              className="btn btn-outline btn-sm install-nav-btn" 
+              onClick={triggerInstallApp}
+              aria-label="Install Campus 360 App"
+              title="Install Campus 360 App"
+              style={{
+                borderColor: 'var(--gub-green)',
+                color: 'var(--gub-green)',
+                background: 'rgba(16, 185, 129, 0.1)',
+                gap: '0.35rem',
+                borderRadius: 'var(--radius-full)',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.8rem',
+                fontWeight: 700
+              }}
+            >
+              <Download size={14} color="var(--gub-green)" />
+              <span className="install-btn-text">Install App</span>
+            </button>
+
             {/* Theme Toggle */}
             <button 
               className="btn btn-secondary btn-icon" 

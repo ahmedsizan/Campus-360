@@ -803,6 +803,20 @@ body.light-theme input:-webkit-autofill:active {
   .cart-drawer {
     max-width: 100%;
   }
+
+  .install-btn-text {
+    display: none !important;
+  }
+
+  .install-nav-btn {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: var(--radius-md) !important;
+  }
 }
 
 /* iPad & Tablet Screens (600px - 1024px) */
