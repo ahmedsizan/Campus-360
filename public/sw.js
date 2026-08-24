@@ -1,17 +1,7 @@
-// Campus 360 Service Worker
-const CACHE_NAME = 'campus360-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
+// Campus 360 Service Worker - Network First with Cache Fallback
+const CACHE_NAME = 'campus360-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
   self.skipWaiting();
 });
 
@@ -33,14 +23,38 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
+  const url = new URL(event.request.url);
+  // Never intercept Supabase, Vite dev server, chrome-extension, or dynamic API calls
+  if (
+    url.hostname.includes('supabase.co') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.includes('node_modules') ||
+    url.protocol.startsWith('chrome')
+  ) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).catch(() => {
-        return caches.match('/');
-      });
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (event.request.mode === 'navigate') {
+            return caches.match('/');
+          }
+          return new Response('Network error occurred', { status: 408, headers: { 'Content-Type': 'text/plain' } });
+        });
+      })
   );
 });
