@@ -125,15 +125,22 @@ export const ProfileModal: React.FC = () => {
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Avatar Selection Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <label 
+            style={{ 
+              position: 'relative', 
+              flexShrink: 0, 
+              cursor: 'pointer', 
+              display: 'inline-block' 
+            }}
+            title="Tap to select photo from iPhone or Android device"
+          >
             <img 
               src={avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} 
               alt={name} 
               className="avatar-circle"
               style={{ width: '80px', height: '80px', minWidth: '80px', minHeight: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--gub-green)' }}
             />
-            <label 
-              htmlFor="avatar-upload"
+            <div 
               style={{ 
                 position: 'absolute', 
                 bottom: 0, 
@@ -146,21 +153,27 @@ export const ProfileModal: React.FC = () => {
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                pointerEvents: 'none'
               }}
-              title="Upload photo from device"
             >
               <Camera size={15} />
-            </label>
+            </div>
             <input 
-              id="avatar-upload" 
               type="file" 
               accept="image/*" 
               onChange={handleAvatarFile} 
-              style={{ display: 'none' }} 
+              style={{ 
+                position: 'absolute', 
+                inset: 0, 
+                opacity: 0, 
+                width: '100%', 
+                height: '100%', 
+                cursor: 'pointer',
+                zIndex: 10
+              }} 
             />
-          </div>
+          </label>
 
           <div style={{ flex: 1 }}>
             <label className="form-label" style={{ marginBottom: '0.25rem' }}>Avatar Image URL</label>

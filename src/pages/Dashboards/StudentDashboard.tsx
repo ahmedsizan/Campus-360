@@ -14,7 +14,7 @@ import {
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
-  const { notices, buses, setActiveTab, triggerInstallApp } = useApp();
+  const { notices, buses, setActiveTab, triggerInstallApp, setIsProfileModalOpen } = useApp();
 
   const activeBuses = buses.filter(b => b.status === 'active');
   const recentNotices = notices.slice(0, 3);
@@ -37,7 +37,9 @@ export const StudentDashboard: React.FC = () => {
             src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
             alt={profile?.name}
             className="avatar-circle"
-            style={{ width: '72px', height: '72px', minWidth: '72px', minHeight: '72px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--gub-green)', flexShrink: 0 }}
+            onClick={() => setIsProfileModalOpen(true)}
+            title="Tap to change profile picture"
+            style={{ width: '72px', height: '72px', minWidth: '72px', minHeight: '72px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--gub-green)', flexShrink: 0, cursor: 'pointer' }}
           />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>

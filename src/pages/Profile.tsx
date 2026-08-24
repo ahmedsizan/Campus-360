@@ -15,7 +15,8 @@ import {
   GraduationCap, 
   Clock,
   Sparkles,
-  Lock
+  Lock,
+  Camera
 } from 'lucide-react';
 
 export const Profile: React.FC = () => {
@@ -36,7 +37,11 @@ export const Profile: React.FC = () => {
         gap: '2rem'
       }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.75rem' }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div 
+            onClick={() => setIsProfileModalOpen(true)}
+            style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
+            title="Click to edit profile picture"
+          >
             <img
               src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
               alt={profile?.name}
@@ -50,14 +55,14 @@ export const Profile: React.FC = () => {
               background: 'var(--gub-green)',
               color: '#fff',
               borderRadius: '50%',
-              width: '26px',
-              height: '26px',
+              width: '28px',
+              height: '28px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
-            }} title="Avatar permanently locked">
-              <Lock size={13} />
+            }} title="Change Photo">
+              <Camera size={14} />
             </div>
           </div>
 
