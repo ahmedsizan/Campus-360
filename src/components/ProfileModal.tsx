@@ -37,14 +37,54 @@ export const ProfileModal: React.FC = () => {
     }
   }, [profile, isProfileModalOpen]);
 
-  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxSize = 400; // 400x400 standard high-res square
+          const width = img.width;
+          const height = img.height;
+
+          // Center crop calculation for perfect square
+          const minDim = Math.min(width, height);
+          const startX = (width - minDim) / 2;
+          const startY = (height - minDim) / 2;
+
+          canvas.width = maxSize;
+          canvas.height = maxSize;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          // Draw center-cropped square
+          ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, maxSize, maxSize);
+          
+          // Output compressed JPEG
+          const compressed = canvas.toDataURL('image/jpeg', 0.88);
+          resolve(compressed);
+        };
+        img.onerror = () => resolve(event.target?.result as string);
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+    });
+  };
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedAvatar = await compressImage(file);
+        setAvatar(compressedAvatar);
+      } catch (err) {
+        console.error('Error compressing image:', err);
+      }
     }
   };
 
@@ -85,11 +125,12 @@ export const ProfileModal: React.FC = () => {
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Avatar Selection Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
             <img 
               src={avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} 
               alt={name} 
-              style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--gub-green)' }}
+              className="avatar-circle"
+              style={{ width: '80px', height: '80px', minWidth: '80px', minHeight: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--gub-green)' }}
             />
             <label 
               htmlFor="avatar-upload"

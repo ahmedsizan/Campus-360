@@ -175,6 +175,15 @@ button {
   padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
 }
 
+/* Universal Perfect Circle Avatar (Prevents Oval Distortion) */
+.avatar-circle {
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  display: block;
+}
+
 /* Glassmorphism Card System */
 .glass-card {
   background: var(--bg-card);

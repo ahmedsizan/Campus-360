@@ -36,11 +36,12 @@ export const Profile: React.FC = () => {
         gap: '2rem'
       }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.75rem' }}>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
             <img
               src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
               alt={profile?.name}
-              style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--gub-green)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}
+              className="avatar-circle"
+              style={{ width: '100px', height: '100px', minWidth: '100px', minHeight: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--gub-green)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', flexShrink: 0 }}
             />
             <div style={{
               position: 'absolute',

@@ -19,17 +19,17 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 /**
- * Avatar resolution: checks local storage first to respect avatar locking
+ * Avatar resolution: prioritizes Supabase cloud database avatar for cross-device sync
  */
 export const getResolvedAvatar = (email?: string | null, dbAvatar?: string | null): string => {
+  if (dbAvatar && dbAvatar.trim().length > 0) {
+    return dbAvatar;
+  }
   if (email) {
     const local = localStorage.getItem(`gub_avatar_${email.toLowerCase().trim()}`);
     if (local && local.trim().length > 0) {
       return local;
     }
-  }
-  if (dbAvatar && dbAvatar.trim().length > 0) {
-    return dbAvatar;
   }
   return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 };

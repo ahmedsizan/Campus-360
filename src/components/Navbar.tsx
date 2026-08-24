@@ -217,13 +217,16 @@ export const Navbar: React.FC = () => {
             </button>
 
             {/* User Profile & More Menu (Three-Dot & Avatar) */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0, width: '38px', height: '38px' }}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  padding: '2px',
+                  width: '38px',
+                  height: '38px',
+                  minWidth: '38px',
+                  minHeight: '38px',
+                  aspectRatio: '1 / 1',
+                  padding: 0,
                   borderRadius: '50%',
                   background: 'var(--bg-card)',
                   border: '2px solid var(--border-subtle)',
@@ -233,6 +236,8 @@ export const Navbar: React.FC = () => {
                   cursor: 'pointer',
                   transition: 'all var(--transition-fast)',
                   position: 'relative',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                 }}
                 aria-label="User account and settings menu"
@@ -241,7 +246,18 @@ export const Navbar: React.FC = () => {
                 <img 
                   src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} 
                   alt={profile?.name || 'User'} 
-                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                  className="avatar-circle"
+                  style={{ 
+                    width: '34px', 
+                    height: '34px', 
+                    minWidth: '34px', 
+                    minHeight: '34px', 
+                    aspectRatio: '1 / 1', 
+                    borderRadius: '50%', 
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                    display: 'block'
+                  }}
                 />
                 <span style={{
                   position: 'absolute',
@@ -251,7 +267,8 @@ export const Navbar: React.FC = () => {
                   height: '10px',
                   borderRadius: '50%',
                   background: 'var(--gub-green)',
-                  border: '2px solid var(--nav-bg)'
+                  border: '2px solid var(--nav-bg)',
+                  flexShrink: 0
                 }} />
               </button>
 
