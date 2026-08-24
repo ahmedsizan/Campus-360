@@ -16,7 +16,9 @@ import {
   AlertCircle, 
   LayoutDashboard,
   ShieldCheck,
-  Download
+  Download,
+  MoreVertical,
+  Palette
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
@@ -35,7 +37,6 @@ export const Navbar: React.FC = () => {
     triggerInstallApp
   } = useApp();
 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
   const navItems: { id: NavigationTab; label: string; icon: React.ReactNode }[] = [
@@ -49,17 +50,17 @@ export const Navbar: React.FC = () => {
 
   const handleNavClick = (tab: NavigationTab) => {
     setActiveTab(tab);
-    setIsMobileMenuOpen(false);
+    setIsUserDropdownOpen(false);
   };
 
   const getRoleBadge = () => {
     if (profile?.role === 'admin') {
-      return <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}><ShieldCheck size={11} /> Admin</span>;
+      return <span className="badge badge-purple" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}><ShieldCheck size={10} /> Admin</span>;
     }
     if (profile?.role === 'teacher') {
-      return <span className="badge badge-cyan" style={{ fontSize: '0.7rem' }}>Faculty</span>;
+      return <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>Faculty</span>;
     }
-    return <span className="badge badge-emerald" style={{ fontSize: '0.7rem' }}>Student</span>;
+    return <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>Student</span>;
   };
 
   return (
@@ -69,56 +70,61 @@ export const Navbar: React.FC = () => {
         top: 0,
         zIndex: 900,
         background: 'var(--nav-bg)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border-subtle)',
         transition: 'background var(--transition-normal)',
-        paddingTop: 'env(safe-area-inset-top, 0px)'
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        width: '100%',
+        overflowX: 'clip'
       }}>
         <div style={{
           maxWidth: '1380px',
           margin: '0 auto',
-          padding: '0.65rem 1rem',
-          paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
+          padding: '0.55rem 0.85rem',
+          paddingLeft: 'max(0.85rem, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(0.85rem, env(safe-area-inset-right, 0px))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '0.75rem'
+          gap: '0.5rem',
+          width: '100%'
         }}>
-          {/* Brand */}
+          {/* Brand - Compact Single Line */}
           <div 
             onClick={() => handleNavClick('dashboard')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0 }}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              cursor: 'pointer', 
+              flexShrink: 0,
+              minWidth: 0
+            }}
           >
             <div style={{
-              width: '38px',
-              height: '38px',
+              width: '34px',
+              height: '34px',
               borderRadius: 'var(--radius-md)',
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+              boxShadow: '0 3px 10px rgba(16, 185, 129, 0.4)',
               flexShrink: 0
             }}>
-              <GraduationCap size={22} />
+              <GraduationCap size={20} />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em' }}>
-                  Campus<span style={{ color: 'var(--gub-green)' }}>360</span>
-                </span>
-                {getRoleBadge()}
-              </div>
-              <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', letterSpacing: '0.03em', textTransform: 'uppercase', fontWeight: 600, display: 'none' }} className="brand-subtitle">
-                Green University
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
+                Campus<span style={{ color: 'var(--gub-green)' }}>360</span>
+              </span>
+              {getRoleBadge()}
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links (Hidden on Mobile/Tablet) */}
           <div style={{ display: 'none', alignItems: 'center', gap: '0.25rem' }} className="desktop-nav">
             {navItems.map(item => {
               const isActive = activeTab === item.id;
@@ -130,9 +136,9 @@ export const Navbar: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    padding: '0.5rem 0.85rem',
+                    padding: '0.45rem 0.8rem',
                     borderRadius: 'var(--radius-md)',
-                    fontSize: '0.88rem',
+                    fontSize: '0.86rem',
                     fontWeight: 600,
                     color: isActive ? 'var(--gub-green)' : 'var(--text-secondary)',
                     background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
@@ -147,45 +153,43 @@ export const Navbar: React.FC = () => {
             })}
           </div>
 
-          {/* Right Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-            {/* Install App Button */}
+          {/* Right Controls - Ultra Compact */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+            {/* Desktop Only: Dedicated Install & Theme Buttons */}
             <button 
-              className="btn btn-outline btn-sm install-nav-btn" 
+              className="btn btn-outline btn-sm desktop-only-control" 
               onClick={triggerInstallApp}
               aria-label="Install Campus 360 App"
-              title="Install Campus 360 App"
               style={{
                 borderColor: 'var(--gub-green)',
                 color: 'var(--gub-green)',
-                background: 'rgba(16, 185, 129, 0.1)',
+                background: 'rgba(16, 185, 129, 0.08)',
                 gap: '0.35rem',
                 borderRadius: 'var(--radius-full)',
                 padding: '0.35rem 0.75rem',
                 fontSize: '0.8rem',
-                fontWeight: 700
+                fontWeight: 700,
+                display: 'none'
               }}
             >
               <Download size={14} color="var(--gub-green)" />
-              <span className="install-btn-text">Install App</span>
+              <span>Install App</span>
             </button>
 
-            {/* Theme Toggle */}
             <button 
-              className="btn btn-secondary btn-icon" 
+              className="btn btn-secondary btn-icon desktop-only-control" 
               onClick={toggleTheme}
-              aria-label="Toggle dark/light theme"
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-              style={{ width: '38px', height: '38px' }}
+              aria-label="Toggle theme"
+              style={{ width: '36px', height: '36px', display: 'none' }}
             >
-              {theme === 'dark' ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="#6366f1" />}
+              {theme === 'dark' ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="#6366f1" />}
             </button>
 
             {/* Cart Trigger */}
             <button 
               className="btn btn-secondary btn-icon" 
               onClick={() => setIsCartOpen(true)}
-              style={{ position: 'relative', width: '38px', height: '38px' }}
+              style={{ position: 'relative', width: '36px', height: '36px', flexShrink: 0 }}
               aria-label="Open cafeteria tray"
               title="Cafeteria Tray"
             >
@@ -197,10 +201,10 @@ export const Navbar: React.FC = () => {
                   right: '-4px',
                   background: 'var(--gub-green)',
                   color: '#fff',
-                  fontSize: '0.7rem',
+                  fontSize: '0.68rem',
                   fontWeight: 700,
-                  width: '19px',
-                  height: '19px',
+                  width: '18px',
+                  height: '18px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -212,13 +216,13 @@ export const Navbar: React.FC = () => {
               )}
             </button>
 
-            {/* User Profile Avatar Button */}
-            <div style={{ position: 'relative' }}>
+            {/* User Profile & More Menu (Three-Dot & Avatar) */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '36px',
+                  height: '36px',
                   padding: '2px',
                   borderRadius: '50%',
                   background: 'var(--bg-card)',
@@ -231,8 +235,8 @@ export const Navbar: React.FC = () => {
                   position: 'relative',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                 }}
-                aria-label="User account menu"
-                title={profile?.name || 'Account'}
+                aria-label="User account and settings menu"
+                title={profile?.name || 'Account menu'}
               >
                 <img 
                   src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} 
@@ -251,7 +255,7 @@ export const Navbar: React.FC = () => {
                 }} />
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Comprehensive Dropdown Menu */}
               {isUserDropdownOpen && (
                 <>
                   <div 
@@ -262,22 +266,68 @@ export const Navbar: React.FC = () => {
                     position: 'absolute',
                     right: 0,
                     top: '115%',
-                    width: '240px',
+                    width: '250px',
+                    maxWidth: 'calc(100vw - 1.5rem)',
                     background: 'var(--modal-bg)',
                     border: '1px solid var(--border-card)',
                     borderRadius: 'var(--radius-lg)',
                     padding: '0.75rem',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.45)',
                     zIndex: 920,
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.35rem',
                     animation: 'fadeIn 0.2s ease-out'
                   }}>
-                    <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.25rem' }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile?.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile?.email}</div>
+                    {/* User info */}
+                    <div style={{ padding: '0.45rem 0.65rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.25rem' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {profile?.name}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {profile?.email}
+                      </div>
                     </div>
+
+                    {/* Theme Mode Toggle Inside Dropdown (Frees Navbar Space!) */}
+                    <button
+                      onClick={() => {
+                        toggleTheme();
+                        setIsUserDropdownOpen(false);
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        padding: '0.6rem 0.75rem', 
+                        borderRadius: 'var(--radius-sm)', 
+                        fontSize: '0.88rem', 
+                        color: 'var(--text-primary)', 
+                        textAlign: 'left', 
+                        width: '100%',
+                        background: 'var(--bg-input)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        {theme === 'dark' ? <Moon size={16} color="#fbbf24" /> : <Sun size={16} color="#6366f1" />}
+                        <span>{theme === 'dark' ? 'Dark Theme (Night)' : 'Light Theme (Day)'}</span>
+                      </div>
+                      <span className="badge badge-slate" style={{ fontSize: '0.7rem' }}>
+                        {theme === 'dark' ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+
+                    {/* Install App Trigger */}
+                    <button
+                      onClick={() => {
+                        triggerInstallApp();
+                        setIsUserDropdownOpen(false);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-green-light)', fontWeight: 600, textAlign: 'left', width: '100%' }}
+                      className="btn-secondary"
+                    >
+                      <Download size={16} color="var(--gub-green)" /> Install Mobile App
+                    </button>
 
                     <button
                       onClick={() => {
@@ -303,24 +353,13 @@ export const Navbar: React.FC = () => {
 
                     <button
                       onClick={() => {
-                        triggerInstallApp();
-                        setIsUserDropdownOpen(false);
-                      }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-green-light)', fontWeight: 600, textAlign: 'left', width: '100%' }}
-                      className="btn-secondary"
-                    >
-                      <Download size={16} color="var(--gub-green)" /> Install Mobile App
-                    </button>
-
-                    <button
-                      onClick={() => {
                         setActiveTab('settings');
                         setIsUserDropdownOpen(false);
                       }}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--text-primary)', textAlign: 'left', width: '100%' }}
                       className="btn-secondary"
                     >
-                      <Settings size={16} /> App Preferences
+                      <Palette size={16} /> App Preferences
                     </button>
 
                     <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '0.35rem', paddingTop: '0.35rem' }}>
@@ -338,68 +377,16 @@ export const Navbar: React.FC = () => {
                 </>
               )}
             </div>
-
-            {/* Mobile Hamburger Drawer Trigger */}
-            <button 
-              className="btn btn-secondary btn-icon mobile-menu-btn"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle navigation menu"
-              style={{ width: '38px', height: '38px' }}
-            >
-              {isMobileMenuOpen ? <X size={19} /> : <Menu size={19} />}
-            </button>
           </div>
         </div>
-
-        {/* Mobile Menu Drawer */}
-        {isMobileMenuOpen && (
-          <div style={{
-            borderTop: '1px solid var(--border-subtle)',
-            padding: '1rem',
-            background: 'var(--bg-subtle)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.5rem',
-            animation: 'fadeIn 0.2s ease-out'
-          }}>
-            {navItems.map(item => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.92rem',
-                    fontWeight: 600,
-                    color: isActive ? '#fff' : 'var(--text-primary)',
-                    background: isActive ? 'var(--gub-green)' : 'var(--bg-card)',
-                    textAlign: 'left',
-                    width: '100%'
-                  }}
-                >
-                  {item.icon}
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         <style>{`
           @media (min-width: 900px) {
             .desktop-nav {
               display: flex !important;
             }
-            .mobile-menu-btn {
-              display: none !important;
-            }
-            .brand-subtitle {
-              display: block !important;
+            .desktop-only-control {
+              display: inline-flex !important;
             }
           }
         `}</style>
