@@ -281,6 +281,7 @@ export const LostFound: React.FC = () => {
                 className="form-input"
                 value={contactName}
                 onChange={e => setContactName(e.target.value)}
+                placeholder="Ahmed Sizan"
                 required
               />
             </div>

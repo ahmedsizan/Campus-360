@@ -172,7 +172,7 @@ export const Login: React.FC = () => {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Tanvir Ahmed"
+                  placeholder="Ahmed Sizan"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   style={inputStyle}

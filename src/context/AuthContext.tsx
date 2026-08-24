@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newProfile: UserProfile = {
         id: authUser?.id || `usr-${Date.now()}`,
         email: emailLower,
-        name: rawMeta.name || emailLower.split('@')[0].replace(/[._-]/g, ' ').toUpperCase(),
+        name: rawMeta.name || 'Ahmed Sizan',
         role: (rawMeta.role as UserRole) || role,
         department: rawMeta.department || 'Computer Science & Engineering',
         id_no: rawMeta.id_no || `GUB-22100${Math.floor(Math.random() * 800 + 100)}`,

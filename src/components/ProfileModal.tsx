@@ -182,7 +182,7 @@ export const ProfileModal: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
           <div className="form-group">
             <label className="form-label"><User size={14} style={{ display: 'inline', marginRight: '4px' }} /> Full Name</label>
-            <input type="text" className="form-input" value={name} onChange={e => setName(e.target.value)} required />
+            <input type="text" className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="Ahmed Sizan" required />
           </div>
 
           <div className="form-group">
