@@ -41,7 +41,7 @@ export const Login: React.FC = () => {
     if (mode === 'login') {
       const { error } = await signIn(email, password);
       if (error) {
-        addToast('error', error.message || 'Invalid credentials. Please verify your email and password.', 'Sign In Failed');
+        addToast('error', error.message || 'Invalid credentials. Please check your email and password.', 'Sign In Failed');
       } else {
         addToast('success', 'Signed in successfully.', 'Welcome');
       }
@@ -55,6 +55,13 @@ export const Login: React.FC = () => {
     }
 
     setLoading(false);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: theme === 'dark' ? '#151e32' : '#ffffff',
+    color: theme === 'dark' ? '#ffffff' : '#0f172a',
+    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.15)',
+    fontWeight: 500
   };
 
   return (
@@ -81,7 +88,7 @@ export const Login: React.FC = () => {
 
       {/* Centered Auth Card */}
       <div className="glass-card animate-fade-in" style={{
-        maxWidth: '480px',
+        maxWidth: '460px',
         width: '100%',
         padding: '2.5rem',
         boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.15)',
@@ -114,7 +121,7 @@ export const Login: React.FC = () => {
         {/* Tab Switcher */}
         <div style={{
           display: 'flex',
-          background: 'var(--bg-input)',
+          background: theme === 'dark' ? '#0f172a' : '#e2e8f0',
           borderRadius: 'var(--radius-md)',
           padding: '4px',
           marginBottom: '1.75rem',
@@ -168,6 +175,7 @@ export const Login: React.FC = () => {
                   placeholder="e.g. Tanvir Ahmed"
                   value={name}
                   onChange={e => setName(e.target.value)}
+                  style={inputStyle}
                   required
                 />
               </div>
@@ -180,6 +188,7 @@ export const Login: React.FC = () => {
                   className="form-select"
                   value={role}
                   onChange={e => setRole(e.target.value as UserRole)}
+                  style={inputStyle}
                 >
                   <option value="student">Student</option>
                   <option value="teacher">Teacher / Faculty</option>
@@ -195,6 +204,7 @@ export const Login: React.FC = () => {
                   className="form-select"
                   value={department}
                   onChange={e => setDepartment(e.target.value)}
+                  style={inputStyle}
                 >
                   <option value="Computer Science & Engineering">CSE — Computer Science & Engineering</option>
                   <option value="Electrical & Electronic Engineering">EEE — Electrical & Electronic Engineering</option>
@@ -215,6 +225,7 @@ export const Login: React.FC = () => {
                   placeholder="e.g. 221002001"
                   value={idNo}
                   onChange={e => setIdNo(e.target.value)}
+                  style={inputStyle}
                   required
                 />
               </div>
@@ -231,6 +242,7 @@ export const Login: React.FC = () => {
               placeholder="user@green.edu.bd"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              style={inputStyle}
               required
             />
           </div>
@@ -246,8 +258,8 @@ export const Login: React.FC = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                style={{ ...inputStyle, paddingRight: '42px' }}
                 required
-                style={{ paddingRight: '40px' }}
               />
               <button
                 type="button"
