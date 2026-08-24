@@ -2,23 +2,18 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { 
-  Sparkles, 
-  Award, 
-  BookOpen, 
-  CheckCircle2, 
   Bus, 
   Utensils, 
   Bell, 
   AlertCircle, 
   Search, 
   ArrowRight,
-  Clock,
   MapPin
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
-  const { notices, buses, setActiveTab, setIsCartOpen } = useApp();
+  const { notices, buses, setActiveTab } = useApp();
 
   const activeBuses = buses.filter(b => b.status === 'active');
   const recentNotices = notices.slice(0, 3);
@@ -63,49 +58,6 @@ export const StudentDashboard: React.FC = () => {
           <button className="btn btn-secondary" onClick={() => setActiveTab('transport')}>
             <Bus size={18} /> Track Bus
           </button>
-        </div>
-      </div>
-
-      {/* Academic Stats Grid */}
-      <div className="grid-stats">
-        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Award size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Cumulative GPA</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>3.84 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ 4.00</span></div>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BookOpen size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Credits Completed</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>118 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ 144</span></div>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Class Attendance</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>94.2%</div>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Enrolled Courses</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>5 Courses</div>
-          </div>
         </div>
       </div>
 
