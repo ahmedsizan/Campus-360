@@ -1,0 +1,44 @@
+{
+  "name": "Campus 360 — Green University",
+  "short_name": "Campus 360",
+  "description": "Unified smart campus cloud management portal for Green University of Bangladesh",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Cafeteria",
+      "url": "/?tab=cafeteria",
+      "description": "Order food from cafeteria"
+    },
+    {
+      "name": "Transport",
+      "url": "/?tab=transport",
+      "description": "Track university shuttle buses"
+    },
+    {
+      "name": "Notice Board",
+      "url": "/?tab=notices",
+      "description": "Official campus announcements"
+    }
+  ]
+}
