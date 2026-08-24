@@ -70,12 +70,15 @@ export const Navbar: React.FC = () => {
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border-subtle)',
-        transition: 'background var(--transition-normal)'
+        transition: 'background var(--transition-normal)',
+        paddingTop: 'env(safe-area-inset-top, 0px)'
       }}>
         <div style={{
           maxWidth: '1380px',
           margin: '0 auto',
           padding: '0.65rem 1rem',
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

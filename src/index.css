@@ -1,7 +1,7 @@
 /* =========================================================
    Campus 360 Solution — Design System & Master Stylesheet
    Green University of Bangladesh (GUB)
-   Optimized for Mobile, Tablet & Desktop
+   iOS / iPhone & Mobile/Tablet Master Optimization
    ========================================================= */
 
 :root {
@@ -17,8 +17,8 @@
   --gub-rose: #f43f5e;
 
   /* Typography */
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Transitions & Shadows */
@@ -30,6 +30,12 @@
   --radius-lg: 20px;
   --radius-xl: 28px;
   --radius-full: 9999px;
+
+  /* iOS Safe Area Inset Variables */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
 }
 
 /* Dark Theme (Default) */
@@ -53,7 +59,7 @@ body.dark-theme {
   --shadow-glow: 0 0 25px rgba(16, 185, 129, 0.25);
   --modal-bg: #0f172a;
   --badge-bg: rgba(255, 255, 255, 0.08);
-  --bottom-nav-bg: rgba(15, 23, 42, 0.95);
+  --bottom-nav-bg: rgba(15, 23, 42, 0.96);
 }
 
 /* Light Theme */
@@ -80,7 +86,7 @@ body.light-theme {
   --bottom-nav-bg: rgba(255, 255, 255, 0.96);
 }
 
-/* Base Resets */
+/* Base Resets with iOS Touch Enhancements */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -91,6 +97,7 @@ body.light-theme {
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -100,6 +107,8 @@ body {
   min-height: 100vh;
   line-height: 1.6;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-normal), color var(--transition-normal);
   background-image: 
     radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
@@ -126,10 +135,7 @@ button {
   background: none;
   font-family: inherit;
   touch-action: manipulation;
-}
-
-input, textarea, select {
-  font-family: inherit;
+  -webkit-touch-callout: none;
 }
 
 /* Custom Scrollbar */
@@ -151,7 +157,7 @@ input, textarea, select {
   background: rgba(16, 185, 129, 0.6);
 }
 
-/* Layout Utilities */
+/* Layout Utilities with iOS Safe Areas */
 .app-container {
   min-height: 100vh;
   display: flex;
@@ -165,6 +171,8 @@ input, textarea, select {
   width: 100%;
   margin: 0 auto;
   padding: 2rem 1.5rem 5rem;
+  padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
 }
 
 /* Glassmorphism Card System */
@@ -187,6 +195,7 @@ input, textarea, select {
 .glass-card-interactive {
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -198,7 +207,7 @@ input, textarea, select {
 }
 
 .glass-card-interactive:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 /* Glow Badges & Gradients */
@@ -251,7 +260,7 @@ input, textarea, select {
   border: 1px solid var(--border-subtle);
 }
 
-/* Button System */
+/* Button System with iOS Active Haptics Feedback */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -265,6 +274,7 @@ input, textarea, select {
   transition: all var(--transition-normal);
   white-space: nowrap;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .btn-primary {
@@ -280,7 +290,7 @@ input, textarea, select {
 }
 
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: scale(0.96);
 }
 
 .btn-secondary {
@@ -296,7 +306,7 @@ input, textarea, select {
 }
 
 .btn-secondary:active {
-  transform: translateY(1px);
+  transform: scale(0.96);
 }
 
 .btn-outline {
@@ -334,6 +344,10 @@ input, textarea, select {
   justify-content: center;
 }
 
+.btn-icon:active {
+  transform: scale(0.93);
+}
+
 .btn-sm {
   padding: 0.4rem 0.85rem;
   min-height: 34px;
@@ -348,7 +362,7 @@ input, textarea, select {
   border-radius: var(--radius-lg);
 }
 
-/* Forms & High-Contrast Input System (Prevents Mobile Safari Auto-Zoom) */
+/* Forms & High-Contrast Input System (iOS Safari Auto-Zoom Fix) */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -370,11 +384,22 @@ input, textarea, select {
   border: 1.5px solid var(--border-subtle) !important;
   border-radius: var(--radius-md);
   color: var(--text-primary) !important;
-  font-size: 16px !important; /* 16px prevents iOS Safari from auto-zooming on tap */
+  font-size: 16px !important; /* 16px prevents iOS Safari from auto-zooming on focus */
   font-weight: 500;
   outline: none;
   min-height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+/* Custom Styled Select on iOS */
+.form-select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.1em;
+  padding-right: 2.5rem !important;
 }
 
 .form-input::placeholder, .form-textarea::placeholder {
@@ -417,7 +442,7 @@ body.light-theme input:-webkit-autofill:active {
   resize: vertical;
 }
 
-/* Filter Tab Pills (Smooth Mobile Touch Scroll) */
+/* Filter Tab Pills (Smooth iOS Momentum Scroll) */
 .filter-tabs {
   display: flex;
   align-items: center;
@@ -444,6 +469,12 @@ body.light-theme input:-webkit-autofill:active {
   transition: all var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.filter-tab-btn:active {
+  transform: scale(0.95);
 }
 
 .filter-tab-btn.active {
@@ -571,17 +602,18 @@ body.light-theme input:-webkit-autofill:active {
   margin-bottom: 1.5rem;
 }
 
-/* Modal Overlay (Mobile Sheet & Desktop Centered) */
+/* Modal Overlay (iOS Bottom Sheet & Desktop Centered) */
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   z-index: 1000;
   animation: fadeIn 0.25s ease-out;
 }
@@ -594,15 +626,16 @@ body.light-theme input:-webkit-autofill:active {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 1.75rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
   position: relative;
 }
 
-/* Toast Container (Mobile-Optimized) */
+/* Toast Container (iOS Notch & Bottom Bar Safe) */
 .toast-container {
   position: fixed;
-  bottom: 1.25rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
   right: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -642,12 +675,13 @@ body.light-theme input:-webkit-autofill:active {
   border-left: 4px solid #f59e0b;
 }
 
-/* Cart Drawer */
+/* Cart Drawer with iOS Safe Areas */
 .cart-drawer-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 1100;
 }
 
@@ -663,6 +697,8 @@ body.light-theme input:-webkit-autofill:active {
   z-index: 1200;
   display: flex;
   flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
   animation: slideDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -672,20 +708,21 @@ body.light-theme input:-webkit-autofill:active {
   to { transform: translateX(0); }
 }
 
-/* Bottom Mobile Navigation Bar for Phones */
+/* Bottom Mobile Navigation Bar for iPhone (with Safe Area Inset) */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
   background: var(--bottom-nav-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid var(--border-subtle);
   z-index: 850;
   padding: 0 0.5rem;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 768px) {
@@ -708,6 +745,12 @@ body.light-theme input:-webkit-autofill:active {
   font-size: 0.72rem;
   font-weight: 600;
   transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-bottom-nav-item:active {
+  transform: scale(0.92);
 }
 
 .mobile-bottom-nav-item.active {
@@ -715,13 +758,13 @@ body.light-theme input:-webkit-autofill:active {
 }
 
 /* =========================================================
-   COMPREHENSIVE RESPONSIVE BREAKPOINTS (Mobile & Tablet)
+   COMPREHENSIVE RESPONSIVE BREAKPOINTS (iPhone, Mobile & Tablet)
    ========================================================= */
 
-/* Mobile Phones (< 600px) */
+/* Mobile & iPhone (< 600px) */
 @media (max-width: 600px) {
   .main-content {
-    padding: 1rem 0.85rem 5.5rem;
+    padding: 1rem 0.85rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .page-title {
@@ -748,7 +791,7 @@ body.light-theme input:-webkit-autofill:active {
   .toast-container {
     left: 1rem;
     right: 1rem;
-    bottom: 4.75rem;
+    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   }
 
   .toast-item {
@@ -762,10 +805,10 @@ body.light-theme input:-webkit-autofill:active {
   }
 }
 
-/* Tablet Screens (600px - 1024px) */
+/* iPad & Tablet Screens (600px - 1024px) */
 @media (min-width: 601px) and (max-width: 1024px) {
   .main-content {
-    padding: 1.5rem 1.25rem 5rem;
+    padding: 1.5rem 1.25rem calc(5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .page-title {
