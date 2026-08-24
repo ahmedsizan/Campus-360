@@ -183,29 +183,43 @@ export const Navbar: React.FC = () => {
             )}
           </button>
 
-          {/* User Profile Pill */}
+          {/* User Profile Avatar Button */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
               style={{
+                width: '40px',
+                height: '40px',
+                padding: '2px',
+                borderRadius: '50%',
+                background: 'var(--bg-card)',
+                border: '2px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.35rem 0.65rem 0.35rem 0.35rem',
-                borderRadius: 'var(--radius-full)',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-subtle)',
-                transition: 'all var(--transition-fast)'
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+                position: 'relative',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
               }}
+              aria-label="User account menu"
+              title={profile?.name || 'Account'}
             >
               <img 
                 src={profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'} 
                 alt={profile?.name || 'User'} 
-                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
               />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {profile?.name ? profile.name.split(' ')[0] : 'Account'}
-              </span>
+              <span style={{
+                position: 'absolute',
+                bottom: '-1px',
+                right: '-1px',
+                width: '11px',
+                height: '11px',
+                borderRadius: '50%',
+                background: 'var(--gub-green)',
+                border: '2px solid var(--nav-bg)'
+              }} />
             </button>
 
             {/* Dropdown Menu */}
