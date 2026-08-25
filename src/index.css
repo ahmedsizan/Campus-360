@@ -792,9 +792,31 @@ body.light-theme input:-webkit-autofill:active {
     grid-template-columns: 1fr;
   }
 
+  .modal-backdrop {
+    padding: 0.75rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
   .modal-content {
-    padding: 1.25rem;
+    padding: 1.15rem 1rem;
     border-radius: var(--radius-lg);
+    max-height: 85vh;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .modal-actions-responsive {
+    flex-direction: column-reverse !important;
+    gap: 0.5rem !important;
+  }
+
+  .btn-modal-action {
+    width: 100% !important;
+    flex: none !important;
+    white-space: normal !important;
+    text-align: center;
+    justify-content: center;
+    word-break: break-word;
   }
 
   .toast-container {

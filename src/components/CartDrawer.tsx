@@ -76,14 +76,14 @@ export const CartDrawer: React.FC = () => {
                 <div 
                   key={item.id} 
                   className="glass-card" 
-                  style={{ padding: '0.85rem', display: 'flex', gap: '0.85rem', alignItems: 'center' }}
+                  style={{ padding: '0.85rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}
                 >
                   <img 
                     src={item.image} 
                     alt={item.name} 
-                    style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-sm)', objectFit: 'cover' }}
+                    style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: '1 1 130px', minWidth: 0 }}>
                     <h4 style={{ fontSize: '0.92rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.name}
                     </h4>
@@ -92,34 +92,36 @@ export const CartDrawer: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Quantity controls */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-input)', padding: '0.25rem 0.4rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                  {/* Quantity controls & remove */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-input)', padding: '0.25rem 0.4rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                      <button 
+                        onClick={() => updateCartQuantity(item.id, quantity - 1)}
+                        style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', padding: '2px' }}
+                        aria-label="Decrease"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, minWidth: '18px', textAlign: 'center' }}>
+                        {quantity}
+                      </span>
+                      <button 
+                        onClick={() => updateCartQuantity(item.id, quantity + 1)}
+                        style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', padding: '2px' }}
+                        aria-label="Increase"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
                     <button 
-                      onClick={() => updateCartQuantity(item.id, quantity - 1)}
-                      style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', padding: '2px' }}
-                      aria-label="Decrease"
+                      onClick={() => removeFromCart(item.id)}
+                      style={{ color: 'var(--text-muted)', padding: '4px' }}
+                      aria-label="Remove item"
                     >
-                      <Minus size={14} />
-                    </button>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 700, minWidth: '18px', textAlign: 'center' }}>
-                      {quantity}
-                    </span>
-                    <button 
-                      onClick={() => updateCartQuantity(item.id, quantity + 1)}
-                      style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', padding: '2px' }}
-                      aria-label="Increase"
-                    >
-                      <Plus size={14} />
+                      <X size={16} />
                     </button>
                   </div>
-
-                  <button 
-                    onClick={() => removeFromCart(item.id)}
-                    style={{ color: 'var(--text-muted)', padding: '4px' }}
-                    aria-label="Remove item"
-                  >
-                    <X size={16} />
-                  </button>
                 </div>
               ))}
             </>

@@ -179,7 +179,7 @@ export const Cafeteria: React.FC = () => {
                   </h3>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Price</span>
                     <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--gub-green)' }}>
@@ -190,7 +190,7 @@ export const Cafeteria: React.FC = () => {
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={() => handleOpenUnitModal(item)}
-                    style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1rem' }}
+                    style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
                   >
                     <Plus size={16} /> Select Unit
                   </button>
@@ -211,13 +211,13 @@ export const Cafeteria: React.FC = () => {
       >
         {selectedItem && (
           <div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', flexWrap: 'wrap' }}>
               <img
                 src={selectedItem.image}
                 alt={selectedItem.name}
-                style={{ width: '70px', height: '70px', borderRadius: 'var(--radius-sm)', objectFit: 'cover' }}
+                style={{ width: '65px', height: '65px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
               />
-              <div>
+              <div style={{ flex: 1, minWidth: '150px' }}>
                 <h4 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{selectedItem.name}</h4>
                 <div style={{ fontSize: '0.9rem', color: 'var(--gub-green)', fontWeight: 700, marginTop: '0.2rem' }}>
                   Tk {selectedItem.price} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>per unit</span>
@@ -253,7 +253,7 @@ export const Cafeteria: React.FC = () => {
             </div>
 
             {/* Live Subtotal Card */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Item Subtotal</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{quantity} unit(s) × Tk {selectedItem.price}</div>
@@ -264,10 +264,10 @@ export const Cafeteria: React.FC = () => {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div className="modal-actions-responsive" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary btn-modal-action"
                 style={{ flex: 1 }}
                 onClick={() => setSelectedItem(null)}
               >
@@ -275,7 +275,7 @@ export const Cafeteria: React.FC = () => {
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary btn-modal-action"
                 style={{ flex: 2 }}
                 onClick={handleAddToCart}
               >
