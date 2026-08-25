@@ -38,10 +38,7 @@ npm install
 ```
 
 ### 2. Configure Environment Variables
-Create a `.env` file in the root directory:
-```env
-VITE_SUPABASE_URL=https://pdregecsxfqgxkerjdcu.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcmVnZWNzeGZxZ3hrZXJqZGN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NjIzMTEsImV4cCI6MjEwMzEzODMxMX0.8jZG4Iguu-QDO0wy9jPszZV8GgVCv_PjqWkAopMrT6E
+
 ```
 
 ### 3. Run Locally
