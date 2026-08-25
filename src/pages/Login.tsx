@@ -292,6 +292,52 @@ export const Login: React.FC = () => {
               )}
             </button>
           </div>
+
+          {mode === 'login' && (
+            <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.65rem' }}>
+                Quick 1-Tap Tablet Demo Login
+              </span>
+              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setEmail('student@green.edu.bd');
+                    setPassword('student123');
+                    signIn('student@green.edu.bd', 'student123');
+                  }}
+                  style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
+                >
+                  Student Demo
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setEmail('teacher@green.edu.bd');
+                    setPassword('teacher123');
+                    signIn('teacher@green.edu.bd', 'teacher123');
+                  }}
+                  style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
+                >
+                  Faculty Demo
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setEmail('admin@green.edu.bd');
+                    setPassword('admin123');
+                    signIn('admin@green.edu.bd', 'admin123');
+                  }}
+                  style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
+                >
+                  Admin Demo
+                </button>
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </div>

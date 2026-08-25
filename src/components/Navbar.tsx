@@ -10,6 +10,7 @@ import {
   User, 
   Settings, 
   LogOut, 
+  LogIn,
   Bus, 
   Utensils, 
   Search, 
@@ -216,6 +217,26 @@ export const Navbar: React.FC = () => {
               )}
             </button>
 
+            {/* Dedicated Log In / Switch Account Button for Tablet & Mobile Header */}
+            <button 
+              className="btn btn-primary btn-sm"
+              onClick={() => signOut()}
+              title="Log In or Switch Account"
+              style={{
+                borderRadius: 'var(--radius-full)',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                flexShrink: 0
+              }}
+            >
+              <LogIn size={14} />
+              <span>Log In</span>
+            </button>
+
             {/* User Profile & More Menu (Three-Dot & Avatar) */}
             <div style={{ position: 'relative', flexShrink: 0, width: '38px', height: '38px' }}>
               <button
@@ -379,7 +400,16 @@ export const Navbar: React.FC = () => {
                       <Palette size={16} /> App Preferences
                     </button>
 
-                    <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '0.35rem', paddingTop: '0.35rem' }}>
+                    <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '0.35rem', paddingTop: '0.35rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <button
+                        onClick={() => {
+                          signOut();
+                          setIsUserDropdownOpen(false);
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-green-light)', textAlign: 'left', width: '100%', fontWeight: 700 }}
+                      >
+                        <LogIn size={16} color="var(--gub-green)" /> Log In / Switch Account
+                      </button>
                       <button
                         onClick={() => {
                           signOut();
@@ -398,7 +428,7 @@ export const Navbar: React.FC = () => {
         </div>
 
         <style>{`
-          @media (min-width: 900px) {
+          @media (min-width: 600px) {
             .desktop-nav {
               display: flex !important;
             }
