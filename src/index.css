@@ -615,16 +615,15 @@ body.light-theme input:-webkit-autofill:active {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(9, 13, 22, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   z-index: 2000;
-  animation: fadeIn 0.25s ease-out;
+  animation: fadeIn 0.2s ease-out;
+  -webkit-font-smoothing: antialiased;
 }
 
 .modal-content {
@@ -633,13 +632,16 @@ body.light-theme input:-webkit-autofill:active {
   border-radius: var(--radius-xl);
   max-width: 600px;
   width: 100%;
-  max-height: calc(100vh - 2.5rem);
+  max-height: calc(100dvh - 2.5rem);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   padding: 1.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
   position: relative;
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  backface-visibility: hidden;
 }
 
 /* Toast Container (iOS Notch & Bottom Bar Safe) */
@@ -787,6 +789,9 @@ body.light-theme input:-webkit-autofill:active {
 
   .glass-card {
     border-radius: var(--radius-md);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--bg-card-solid);
   }
 
   .grid-cards {
@@ -794,15 +799,15 @@ body.light-theme input:-webkit-autofill:active {
   }
 
   .modal-backdrop {
-    padding: 0.75rem;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    padding: 0.5rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
     z-index: 2000;
   }
 
   .modal-content {
     padding: 1.1rem 0.95rem;
     border-radius: var(--radius-lg);
-    max-height: calc(100vh - 4.5rem);
+    max-height: calc(100dvh - 3.5rem);
     box-sizing: border-box;
     width: 100%;
   }
@@ -868,6 +873,6 @@ body.light-theme input:-webkit-autofill:active {
 
   .modal-content {
     padding: 1.35rem;
-    max-height: calc(100vh - 3.5rem);
+    max-height: calc(100dvh - 3.5rem);
   }
 }
