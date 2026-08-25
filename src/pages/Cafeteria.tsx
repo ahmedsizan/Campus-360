@@ -207,64 +207,64 @@ export const Cafeteria: React.FC = () => {
         onClose={() => setSelectedItem(null)}
         title="Select Portions & Quantity"
         subtitle="Choose units to add to your campus cafeteria tray"
-        maxWidth="480px"
+        maxWidth="460px"
       >
         {selectedItem && (
-          <div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', marginBottom: '0.85rem', padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', flexWrap: 'wrap' }}>
               <img
                 src={selectedItem.image}
                 alt={selectedItem.name}
-                style={{ width: '65px', height: '65px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
+                style={{ width: '54px', height: '54px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
               />
-              <div style={{ flex: 1, minWidth: '150px' }}>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{selectedItem.name}</h4>
-                <div style={{ fontSize: '0.9rem', color: 'var(--gub-green)', fontWeight: 700, marginTop: '0.2rem' }}>
-                  Tk {selectedItem.price} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>per unit</span>
+              <div style={{ flex: 1, minWidth: '140px' }}>
+                <h4 style={{ fontSize: '0.98rem', fontWeight: 700, lineHeight: 1.3 }}>{selectedItem.name}</h4>
+                <div style={{ fontSize: '0.85rem', color: 'var(--gub-green)', fontWeight: 700, marginTop: '0.15rem' }}>
+                  Tk {selectedItem.price} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>per unit</span>
                 </div>
               </div>
             </div>
 
             {/* Quantity Stepper */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', margin: '1.5rem 0' }}>
-              <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Quantity</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', margin: '0.85rem 0' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Quantity</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <button
                   type="button"
                   className="btn btn-secondary btn-icon"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1}
-                  style={{ width: '44px', height: '44px', borderRadius: '50%' }}
+                  style={{ width: '38px', height: '38px', borderRadius: '50%' }}
                 >
-                  <Minus size={20} />
+                  <Minus size={18} />
                 </button>
-                <span style={{ fontSize: '1.8rem', fontWeight: 800, minWidth: '45px', textAlign: 'center' }}>
+                <span style={{ fontSize: '1.5rem', fontWeight: 800, minWidth: '38px', textAlign: 'center' }}>
                   {quantity}
                 </span>
                 <button
                   type="button"
                   className="btn btn-secondary btn-icon"
                   onClick={() => setQuantity(quantity + 1)}
-                  style={{ width: '44px', height: '44px', borderRadius: '50%' }}
+                  style={{ width: '38px', height: '38px', borderRadius: '50%' }}
                 >
-                  <Plus size={20} />
+                  <Plus size={18} />
                 </button>
               </div>
             </div>
 
             {/* Live Subtotal Card */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '0.9rem', flexWrap: 'wrap', gap: '0.4rem' }}>
               <div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Item Subtotal</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{quantity} unit(s) × Tk {selectedItem.price}</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Item Subtotal</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{quantity} unit(s) × Tk {selectedItem.price}</div>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--gub-green)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--gub-green)' }}>
                 Tk {selectedItem.price * quantity}
               </div>
             </div>
 
             {/* Actions */}
-            <div className="modal-actions-responsive" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="modal-actions-responsive" style={{ display: 'flex', gap: '0.65rem', marginTop: 'auto', paddingTop: '0.25rem' }}>
               <button
                 type="button"
                 className="btn btn-secondary btn-modal-action"

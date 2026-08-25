@@ -42,14 +42,14 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="modal-backdrop" onClick={onClose}>
       <div 
         className="modal-content animate-fade-in" 
-        style={{ maxWidth }}
+        style={{ maxWidth, width: '100%' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexShrink: 0 }}>
           <div>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
             {subtitle && (
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
                 {subtitle}
               </p>
             )}
@@ -58,13 +58,13 @@ export const Modal: React.FC<ModalProps> = ({
             className="btn btn-secondary btn-icon btn-sm"
             onClick={onClose}
             aria-label="Close modal"
-            style={{ borderRadius: '50%', width: '34px', height: '34px' }}
+            style={{ borderRadius: '50%', width: '32px', height: '32px', flexShrink: 0 }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        <div>
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {children}
         </div>
       </div>
