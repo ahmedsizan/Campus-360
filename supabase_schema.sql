@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'admin')),
+  role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'admin', 'conductor')),
   avatar TEXT,
   phone TEXT,
   department TEXT DEFAULT 'Computer Science & Engineering',
@@ -47,6 +47,7 @@ BEGIN
       CASE 
         WHEN NEW.email ILIKE '%admin%' THEN 'admin'
         WHEN NEW.email ILIKE '%teacher%' OR NEW.email ILIKE '%faculty%' OR NEW.email ILIKE '%prof%' THEN 'teacher'
+        WHEN NEW.email ILIKE '%conductor%' THEN 'conductor'
         ELSE 'student'
       END
     ),
@@ -108,6 +109,7 @@ CREATE POLICY "Buses can be modified by authenticated" ON public.buses FOR ALL U
 -- 3.5 Bus Seat Bookings Table (45 Seats per Bus)
 CREATE TABLE IF NOT EXISTS public.bus_seat_bookings (
   id TEXT PRIMARY KEY,
+  token_id TEXT,
   bus_id TEXT NOT NULL,
   bus_name TEXT NOT NULL,
   direction TEXT NOT NULL CHECK (direction IN ('to_campus', 'from_campus')),
@@ -119,16 +121,21 @@ CREATE TABLE IF NOT EXISTS public.bus_seat_bookings (
   student_id TEXT NOT NULL,
   user_email TEXT NOT NULL,
   booking_date TEXT NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'rejected')),
+  conductor_notes TEXT,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   CONSTRAINT unique_seat_reservation UNIQUE (bus_id, trip_slot, direction, seat_number, booking_date)
 );
 
 ALTER TABLE public.bus_seat_bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Seat bookings are readable by all" ON public.bus_seat_bookings FOR SELECT USING (true);
-CREATE POLICY "Seat bookings can be inserted by authenticated" ON public.bus_seat_bookings FOR INSERT WITH CHECK (true);
-CREATE POLICY "Seat bookings can be deleted by authenticated" ON public.bus_seat_bookings FOR DELETE USING (true);
+CREATE POLICY "Seat bookings can be inserted by all" ON public.bus_seat_bookings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Seat bookings can be updated by all" ON public.bus_seat_bookings FOR UPDATE USING (true);
+CREATE POLICY "Seat bookings can be deleted by all" ON public.bus_seat_bookings FOR DELETE USING (true);
 
 CREATE INDEX IF NOT EXISTS idx_seat_bookings_bus_slot ON public.bus_seat_bookings(bus_id, trip_slot, booking_date);
+CREATE INDEX IF NOT EXISTS idx_seat_bookings_token_id ON public.bus_seat_bookings(token_id);
+
 
 
 

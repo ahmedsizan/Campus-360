@@ -46,7 +46,8 @@ export const Login: React.FC = () => {
         addToast('success', 'Signed in successfully.', 'Welcome');
       }
     } else {
-      const { error } = await signUp(email, password, name, role, department, idNo);
+      const finalDept = role === 'conductor' ? 'Transport & Fleet Division' : department;
+      const { error } = await signUp(email, password, name, role, finalDept, idNo);
       if (error) {
         addToast('error', error.message || 'Registration failed with Supabase.', 'Sign Up Failed');
       } else {
@@ -172,7 +173,7 @@ export const Login: React.FC = () => {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ahmed Sizan"
+                  placeholder={role === 'conductor' ? 'e.g. Md. Rafiqul Islam (Conductor)' : 'Ahmed Sizan'}
                   value={name}
                   onChange={e => setName(e.target.value)}
                   style={inputStyle}
@@ -193,36 +194,40 @@ export const Login: React.FC = () => {
                   <option value="student">Student</option>
                   <option value="teacher">Teacher / Faculty</option>
                   <option value="admin">Administrator</option>
+                  <option value="conductor">Bus Conductor (Transit Staff)</option>
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">
-                  <BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> Department
-                </label>
-                <select
-                  className="form-select"
-                  value={department}
-                  onChange={e => setDepartment(e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="Computer Science & Engineering">CSE — Computer Science & Engineering</option>
-                  <option value="Electrical & Electronic Engineering">EEE — Electrical & Electronic Engineering</option>
-                  <option value="Textile Engineering">TE — Textile Engineering</option>
-                  <option value="Green Business School">BBA — Green Business School</option>
-                  <option value="Department of English">English Department</option>
-                  <option value="Department of Law">Law Department</option>
-                </select>
-              </div>
+              {/* Department is only for Academic Roles (Student, Teacher, Admin), NOT for Bus Conductor */}
+              {role !== 'conductor' && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">
+                    <BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> Department
+                  </label>
+                  <select
+                    className="form-select"
+                    value={department}
+                    onChange={e => setDepartment(e.target.value)}
+                    style={inputStyle}
+                  >
+                    <option value="Computer Science & Engineering">CSE — Computer Science & Engineering</option>
+                    <option value="Electrical & Electronic Engineering">EEE — Electrical & Electronic Engineering</option>
+                    <option value="Textile Engineering">TE — Textile Engineering</option>
+                    <option value="Green Business School">BBA — Green Business School</option>
+                    <option value="Department of English">English Department</option>
+                    <option value="Department of Law">Law Department</option>
+                  </select>
+                </div>
+              )}
 
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">
-                  <Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> University ID Number
+                  <Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> {role === 'conductor' ? 'Staff / Conductor ID Number' : 'University ID Number'}
                 </label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. 221002001"
+                  placeholder={role === 'conductor' ? 'e.g. STAFF-042 or GUB-COND-01' : 'e.g. 221002001'}
                   value={idNo}
                   onChange={e => setIdNo(e.target.value)}
                   style={inputStyle}
@@ -302,10 +307,17 @@ export const Login: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  onClick={() => {
+                  onClick={async () => {
                     setEmail('student@green.edu.bd');
                     setPassword('student123');
-                    signIn('student@green.edu.bd', 'student123');
+                    setLoading(true);
+                    const { error } = await signIn('student@green.edu.bd', 'student123');
+                    setLoading(false);
+                    if (error) {
+                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                    } else {
+                      addToast('success', 'Signed in as Ahmed Sizan (Student)', 'Welcome Back');
+                    }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                 >
@@ -314,10 +326,17 @@ export const Login: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  onClick={() => {
+                  onClick={async () => {
                     setEmail('teacher@green.edu.bd');
                     setPassword('teacher123');
-                    signIn('teacher@green.edu.bd', 'teacher123');
+                    setLoading(true);
+                    const { error } = await signIn('teacher@green.edu.bd', 'teacher123');
+                    setLoading(false);
+                    if (error) {
+                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                    } else {
+                      addToast('success', 'Signed in as Dr. Mohammad Nazmul Islam (Faculty)', 'Welcome Back');
+                    }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                 >
@@ -326,14 +345,40 @@ export const Login: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  onClick={() => {
+                  onClick={async () => {
                     setEmail('admin@green.edu.bd');
                     setPassword('admin123');
-                    signIn('admin@green.edu.bd', 'admin123');
+                    setLoading(true);
+                    const { error } = await signIn('admin@green.edu.bd', 'admin123');
+                    setLoading(false);
+                    if (error) {
+                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                    } else {
+                      addToast('success', 'Signed in as Administrator', 'Welcome Back');
+                    }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                 >
                   Admin Demo
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={async () => {
+                    setEmail('conductor@green.edu.bd');
+                    setPassword('conductor123');
+                    setLoading(true);
+                    const { error } = await signIn('conductor@green.edu.bd', 'conductor123');
+                    setLoading(false);
+                    if (error) {
+                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                    } else {
+                      addToast('success', 'Signed in as Bus Conductor', 'Welcome Back');
+                    }
+                  }}
+                  style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', border: '1.5px solid #f59e0b', color: '#f59e0b', fontWeight: 700 }}
+                >
+                  🚌 Conductor Demo
                 </button>
               </div>
             </div>

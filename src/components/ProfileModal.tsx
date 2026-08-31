@@ -203,21 +203,28 @@ export const ProfileModal: React.FC = () => {
             <input type="text" className="form-input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+880 1..." />
           </div>
 
-          <div className="form-group">
-            <label className="form-label"><BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> Department</label>
-            <select className="form-select" value={department} onChange={e => setDepartment(e.target.value)}>
-              <option value="Computer Science & Engineering">Computer Science & Engineering (CSE)</option>
-              <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering (EEE)</option>
-              <option value="Textile Engineering">Textile Engineering (TE)</option>
-              <option value="Green Business School">Green Business School (BBA)</option>
-              <option value="Department of English">Department of English</option>
-              <option value="Department of Law">Department of Law</option>
-            </select>
-          </div>
+          {profile?.role !== 'conductor' ? (
+            <div className="form-group">
+              <label className="form-label"><BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> Department</label>
+              <select className="form-select" value={department} onChange={e => setDepartment(e.target.value)}>
+                <option value="Computer Science & Engineering">Computer Science & Engineering (CSE)</option>
+                <option value="Electrical & Electronic Engineering">Electrical & Electronic Engineering (EEE)</option>
+                <option value="Textile Engineering">Textile Engineering (TE)</option>
+                <option value="Green Business School">Green Business School (BBA)</option>
+                <option value="Department of English">Department of English</option>
+                <option value="Department of Law">Department of Law</option>
+              </select>
+            </div>
+          ) : (
+            <div className="form-group">
+              <label className="form-label"><BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> Operational Division</label>
+              <input type="text" className="form-input" value={department || 'Transport & Fleet Division'} onChange={e => setDepartment(e.target.value)} />
+            </div>
+          )}
 
           <div className="form-group">
-            <label className="form-label"><Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> Student / Employee ID</label>
-            <input type="text" className="form-input" value={idNo} onChange={e => setIdNo(e.target.value)} placeholder="GUB-..." />
+            <label className="form-label"><Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> {profile?.role === 'conductor' ? 'Staff / Conductor ID' : 'Student / Employee ID'}</label>
+            <input type="text" className="form-input" value={idNo} onChange={e => setIdNo(e.target.value)} placeholder={profile?.role === 'conductor' ? 'GUB-STAFF-042' : 'GUB-...'} />
           </div>
 
           {profile?.role === 'student' && (

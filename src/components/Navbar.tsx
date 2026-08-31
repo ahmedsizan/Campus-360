@@ -61,6 +61,9 @@ export const Navbar: React.FC = () => {
     if (profile?.role === 'teacher') {
       return <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>Faculty</span>;
     }
+    if (profile?.role === 'conductor') {
+      return <span className="badge badge-amber" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}><Bus size={10} /> Conductor</span>;
+    }
     return <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>Student</span>;
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BusDirection, BusSeatBooking } from '../types';
 import { BusSeatMap } from './BusSeatMap';
 import { 
@@ -13,7 +13,8 @@ import {
   Armchair, 
   ShieldCheck, 
   Sparkles,
-  User
+  User,
+  ArrowRight
 } from 'lucide-react';
 
 interface GreenLine4ModalProps {
@@ -29,7 +30,7 @@ interface GreenLine4ModalProps {
 
 export const GL4_INBOUND_TRIPS = [
   {
-    id: 'trip-gl4-in-1',
+    id: 'gl4-in-1',
     busNumber: 'Bus 01',
     busName: 'Green Line 4 (Bus 01)',
     departureTime: '07:00 AM',
@@ -42,7 +43,7 @@ export const GL4_INBOUND_TRIPS = [
     ]
   },
   {
-    id: 'trip-gl4-in-2',
+    id: 'gl4-in-2',
     busNumber: 'Bus 02',
     busName: 'Green Line 4 (Bus 02)',
     departureTime: '12:00 PM',
@@ -58,7 +59,7 @@ export const GL4_INBOUND_TRIPS = [
 
 export const GL4_OUTBOUND_TRIPS = [
   {
-    id: 'trip-gl4-out-1',
+    id: 'gl4-out-1',
     busNumber: 'Bus 01',
     busName: 'Green Line 4 (Bus 01)',
     departureTime: '01:45 PM',
@@ -71,7 +72,7 @@ export const GL4_OUTBOUND_TRIPS = [
     ]
   },
   {
-    id: 'trip-gl4-out-2',
+    id: 'gl4-out-2',
     busNumber: 'Bus 02',
     busName: 'Green Line 4 (Bus 02)',
     departureTime: '04:45 PM',
@@ -105,17 +106,28 @@ export const GreenLine4Modal: React.FC<GreenLine4ModalProps> = ({
   const [passengerIdNo, setPassengerIdNo] = useState<string>(currentUserIdNo || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentUserName && !passengerName) setPassengerName(currentUserName);
     if (currentUserIdNo && !passengerIdNo) setPassengerIdNo(currentUserIdNo);
   }, [currentUserName, currentUserIdNo]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedTrip && selectedTrip.stoppages.length > 0) {
       setSelectedStoppage(selectedTrip.stoppages[0].name);
       setSelectedSeat(null);
     }
   }, [selectedTrip]);
+
+  // Handle ESC Key to Close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -127,7 +139,8 @@ export const GreenLine4Modal: React.FC<GreenLine4ModalProps> = ({
       b =>
         b.bus_id === 'bus-4' &&
         (b.bus_name.includes(trip.busNumber) || b.trip_slot === trip.departureTime) &&
-        b.direction === direction
+        b.direction === direction &&
+        b.status !== 'rejected'
     );
   };
 
@@ -164,266 +177,376 @@ export const GreenLine4Modal: React.FC<GreenLine4ModalProps> = ({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div 
-        className="modal-content" 
-        style={{ maxWidth: '780px', maxHeight: '92vh', overflowY: 'auto' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <span className="badge badge-amber">
-                <Sparkles size={12} /> Green Line 4 • 2 Buses Fleet
-              </span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>45 Seats Per Bus</span>
-            </div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-              {selectedTrip ? `Reserve Seat on ${selectedTrip.busName}` : 'Select Bus on Green Line 4'}
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              {selectedTrip 
-                ? `Departure: ${selectedTrip.departureTime} • Pick your seat from the 45-seat cabin map` 
-                : 'Savar ➔ Kuril Flyover ➔ Green University Campus'}
-            </p>
+    <div className="booking-modal-fullscreen animate-fade-in">
+      {/* Sticky Fullscreen Top Header */}
+      <div className="booking-header-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
+          <div style={{
+            width: '38px',
+            height: '38px',
+            minWidth: '38px',
+            borderRadius: 'var(--radius-md)',
+            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            boxShadow: '0 4px 14px rgba(217, 119, 6, 0.4)',
+            flexShrink: 0
+          }}>
+            <BusIcon size={20} />
           </div>
+
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span className="badge badge-amber" style={{ fontSize: '0.7rem', fontWeight: 800 }}>
+                Green Line 4 • Savar
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                45 Seats Long-Haul Fleet
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0.1rem 0 0', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {selectedTrip ? `${selectedTrip.busName} (${selectedTrip.departureTime})` : 'Select Bus Shift & Direction'}
+            </h2>
+          </div>
+        </div>
+
+        {/* Action Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          {selectedTrip && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                setSelectedTrip(null);
+                setSelectedSeat(null);
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.4rem 0.65rem', fontSize: '0.78rem' }}
+            >
+              <ArrowLeft size={14} /> Back
+            </button>
+          )}
 
           <button
             onClick={onClose}
-            style={{
-              background: 'var(--bg-input)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-primary)',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
+            className="btn btn-secondary btn-icon"
+            style={{ width: '36px', height: '36px', minWidth: '36px', borderRadius: '50%', flexShrink: 0 }}
+            title="Close Full Screen Terminal (Esc)"
           >
             <X size={18} />
           </button>
         </div>
+      </div>
 
+      {/* Main Terminal Container */}
+      <div className="booking-terminal-container">
         {/* ========================================================================= */}
-        {/* STEP 1: CHOOSE WHICH OF THE 2 BUSES TO BOOK ON GREEN LINE 4 */}
+        {/* STEP 1: SELECT BUS SHIFT */}
         {/* ========================================================================= */}
-        {!selectedTrip && (
+        {!selectedTrip ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Direction Selector */}
+            {/* Direction Switcher */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <div className="direction-pill-group" style={{ maxWidth: '420px', width: '100%' }}>
+              <div className="direction-pill-group" style={{ maxWidth: '520px', width: '100%', padding: '5px' }}>
                 <button
                   type="button"
                   className={`direction-pill-btn ${direction === 'to_campus' ? 'active' : ''}`}
                   onClick={() => setDirection('to_campus')}
+                  style={{
+                    background: direction === 'to_campus' ? 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' : undefined,
+                    padding: '0.65rem 1.25rem',
+                    fontSize: '0.88rem'
+                  }}
                 >
-                  <Navigation size={15} /> To Campus (Savar ➔ Varsity)
+                  <Navigation size={15} /> To Campus (Savar ➔ GUB)
                 </button>
                 <button
                   type="button"
                   className={`direction-pill-btn ${direction === 'from_campus' ? 'active' : ''}`}
                   onClick={() => setDirection('from_campus')}
+                  style={{
+                    background: direction === 'from_campus' ? 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' : undefined,
+                    padding: '0.65rem 1.25rem',
+                    fontSize: '0.88rem'
+                  }}
                 >
-                  <RotateCcw size={15} /> Return (Varsity ➔ Savar)
+                  <RotateCcw size={15} /> Return (GUB ➔ Savar)
                 </button>
               </div>
             </div>
 
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <BusIcon size={16} color="var(--gub-gold)" />
-              {direction === 'to_campus' 
-                ? 'Select a Bus from Savar Terminal (2 Buses Operating):' 
-                : 'Select a Return Bus from Campus Terminal to Savar:'}
+            {/* Shift List Header */}
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <Clock size={18} color="#f59e0b" />
+                {direction === 'to_campus' ? 'Available Buses Departing from Savar Terminal' : 'Available Return Buses from Campus Terminal'}
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                Select your preferred departure timetable to choose your 45-seat position.
+              </p>
             </div>
 
-            {/* 2 Bus Choice Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
-              {currentTrips.map((trip, idx) => {
+            {/* Bus Cards Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+              {currentTrips.map(trip => {
                 const bookedCount = getBookingsForTrip(trip).length;
                 const availableCount = Math.max(0, 45 - bookedCount);
 
                 return (
                   <div
                     key={trip.id}
-                    className="glass-card glass-card-interactive"
+                    className="glass-card"
                     style={{
-                      padding: '1.5rem',
-                      borderLeft: `4px solid ${idx === 0 ? '#f59e0b' : '#10b981'}`,
+                      padding: '1.75rem',
+                      borderLeft: '4px solid #d97706',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease'
                     }}
                     onClick={() => setSelectedTrip(trip)}
                   >
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
-                        <span className={`badge ${idx === 0 ? 'badge-amber' : 'badge-emerald'}`}>
-                          {trip.busNumber} • {trip.shiftTitle}
-                        </span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--gub-gold)' }}>
-                          {availableCount} / 45 Seats
-                        </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                        <div>
+                          <span className="badge badge-amber" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+                            {trip.busNumber} • {trip.shiftTitle}
+                          </span>
+                          <h4 style={{ fontSize: '1.35rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--text-primary)' }}>
+                            {trip.busName}
+                          </h4>
+                        </div>
+
+                        <div style={{
+                          textAlign: 'right',
+                          padding: '0.5rem 0.9rem',
+                          background: 'rgba(217, 119, 6, 0.15)',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid rgba(217, 119, 6, 0.3)'
+                        }}>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', display: 'block' }}>DEPARTS</span>
+                          <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fbbf24' }}>{trip.departureTime}</span>
+                        </div>
                       </div>
 
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{trip.busName}</h3>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.2rem', marginBottom: '1rem' }}>
-                        {trip.desc}
-                      </p>
-
-                      {/* Stoppage schedule */}
-                      <div style={{ background: 'var(--bg-input)', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                          STOPPAGE TIMINGS
+                      {/* Stoppage Route Preview */}
+                      <div style={{
+                        background: 'var(--bg-input)',
+                        padding: '0.9rem 1.1rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-subtle)',
+                        margin: '1.1rem 0'
+                      }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.5rem', letterSpacing: '0.06em' }}>
+                          SCHEDULED STOPS & TIMING
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          {trip.stoppages.map((st, sIdx) => (
-                            <div key={sIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                              <span style={{ color: 'var(--text-secondary)' }}>{st.name}</span>
-                              <strong style={{ color: 'var(--text-primary)' }}>{st.time}</strong>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                          {trip.stoppages.map((s, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem' }}>
+                              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {idx === 0 ? '🚩' : idx === trip.stoppages.length - 1 ? '🏁' : '📍'} {s.name}
+                              </span>
+                              <span style={{ color: '#fbbf24', fontWeight: 700 }}>{s.time}</span>
                             </div>
                           ))}
+                        </div>
+                      </div>
+
+                      {/* Capacity Bar */}
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.35rem' }}>
+                          <span style={{ color: 'var(--text-secondary)' }}>Available Cabin Capacity</span>
+                          <span style={{ fontWeight: 800, color: availableCount < 10 ? '#f59e0b' : 'var(--gub-green-light)' }}>
+                            {availableCount} of 45 Seats Available
+                          </span>
+                        </div>
+                        <div style={{ height: '7px', width: '100%', background: 'rgba(255, 255, 255, 0.08)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${(bookedCount / 45) * 100}%`,
+                            background: 'linear-gradient(90deg, #d97706 0%, #fbbf24 100%)',
+                            borderRadius: 'var(--radius-full)'
+                          }} />
                         </div>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      className="btn btn-primary btn-sm"
-                      style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        setSelectedTrip(trip);
+                      className="btn btn-primary"
+                      style={{
+                        width: '100%',
+                        justifyContent: 'center',
+                        background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+                        padding: '0.75rem 1rem'
                       }}
                     >
-                      <Armchair size={15} /> Book Seat on {trip.busNumber} ({trip.departureTime})
+                      <Armchair size={17} /> Select This Bus & Pick Seat <ArrowRight size={16} />
                     </button>
                   </div>
                 );
               })}
             </div>
           </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* STEP 2: 45-SEAT INTERACTIVE MAP & BOOKING FORM FOR CHOSEN BUS ON LINE 4 */}
-        {/* ========================================================================= */}
-        {selectedTrip && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Back Button & Bus Summary Header */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-input)', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', gap: '0.75rem' }}>
-              <div>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setSelectedTrip(null)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}
-                >
-                  <ArrowLeft size={14} /> Change Bus ({selectedTrip.busNumber})
-                </button>
-                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {selectedTrip.busName} • Departure @ <span style={{ color: 'var(--gub-gold)' }}>{selectedTrip.departureTime}</span>
+        ) : (
+          /* ========================================================================= */
+          /* STEP 2: 2-COLUMN LUXURY BOOKING TERMINAL */
+          /* ========================================================================= */
+          <form onSubmit={handleConfirmReservation} className="booking-grid-layout">
+            {/* Left Column: 45-Seat Bus Cabin Layout */}
+            <div className="luxury-bus-cabin" style={{ borderColor: 'rgba(217, 119, 6, 0.4)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.45rem', margin: 0 }}>
+                    <Armchair size={19} color="#f59e0b" /> Select Your Seat (1 to 45)
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                    Tap any available seat to select your passenger position
+                  </p>
                 </div>
+
+                {selectedSeat && (
+                  <span className="badge badge-amber" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem', fontWeight: 800 }}>
+                    ✓ Seat #{selectedSeat} Selected
+                  </span>
+                )}
               </div>
 
-              <span className="badge badge-amber" style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}>
-                {45 - getBookingsForTrip(selectedTrip).length} of 45 Seats Available
-              </span>
+              <BusSeatMap
+                totalSeats={45}
+                selectedSeat={selectedSeat}
+                onSelectSeat={seatNo => setSelectedSeat(seatNo)}
+                existingBookings={getBookingsForTrip(selectedTrip)}
+                currentUserEmail={currentUserEmail}
+                lineThemeColor="#d97706"
+                busLineName={selectedTrip.busName}
+              />
             </div>
 
-            {/* Grid with 45-seat map and booking inputs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-              {/* Bus Cabin Map */}
-              <div style={{ background: 'var(--bg-input)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
-                <BusSeatMap
-                  totalSeats={45}
-                  selectedSeat={selectedSeat}
-                  onSelectSeat={seatNo => setSelectedSeat(seatNo)}
-                  existingBookings={getBookingsForTrip(selectedTrip)}
-                  currentUserEmail={currentUserEmail}
-                />
-              </div>
+            {/* Right Column: Passenger Details, Stoppage & Ticket Preview */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Trip Summary Card */}
+              <div className="glass-card" style={{ padding: '1.5rem', borderLeft: '4px solid #d97706' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <span className="badge badge-amber" style={{ fontSize: '0.72rem' }}>
+                      Green Line 4 • {direction === 'to_campus' ? 'Inbound to Campus' : 'Outbound Return'}
+                    </span>
+                    <h4 style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '0.35rem', color: 'var(--text-primary)' }}>
+                      {selectedTrip.busName}
+                    </h4>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 800 }}>DEPARTURE</span>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fbbf24' }}>{selectedTrip.departureTime}</div>
+                  </div>
+                </div>
 
-              {/* Booking Information Form */}
-              <form onSubmit={handleConfirmReservation} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                <div>
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <MapPin size={14} color="var(--gub-gold)" /> Select Boarding Stoppage
+                {/* Stoppage Selector */}
+                <div style={{ marginTop: '1.25rem' }}>
+                  <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <MapPin size={14} color="#f59e0b" /> Select Your Boarding Stoppage
                   </label>
                   <select
-                    className="form-input"
+                    className="form-select"
                     value={selectedStoppage}
                     onChange={e => setSelectedStoppage(e.target.value)}
-                    required
+                    style={{ padding: '0.75rem', fontSize: '0.92rem', fontWeight: 600 }}
                   >
-                    {selectedTrip.stoppages.map((stop, idx) => (
-                      <option key={idx} value={stop.name}>
-                        {stop.name} ({stop.time})
+                    {selectedTrip.stoppages.map((st, idx) => (
+                      <option key={idx} value={st.name}>
+                        {st.name} — Scheduled @ {st.time} ({st.desc})
                       </option>
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div>
-                  <label className="form-label">Passenger Name</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={passengerName}
-                    onChange={e => setPassengerName(e.target.value)}
-                    placeholder="Enter student or teacher name"
-                    required
-                  />
-                </div>
+              {/* Passenger Identity Information */}
+              <div className="glass-card" style={{ padding: '1.5rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <User size={16} color="#f59e0b" /> Passenger Details
+                </h4>
 
-                <div>
-                  <label className="form-label">Student / ID Number</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={passengerIdNo}
-                    onChange={e => setPassengerIdNo(e.target.value)}
-                    placeholder="e.g. 22100234"
-                    required
-                  />
-                </div>
-
-                {/* Selected Seat Summary */}
-                <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>SELECTED SEAT</span>
-                    <span style={{ fontSize: '1.4rem', fontWeight: 900, color: selectedSeat ? 'var(--gub-gold)' : 'var(--text-muted)' }}>
-                      {selectedSeat ? `Seat #${selectedSeat}` : 'Tap a seat to pick'}
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.78rem' }}>Passenger Full Name</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={passengerName}
+                      onChange={e => setPassengerName(e.target.value)}
+                      placeholder="Ahmed Sizan"
+                      required
+                    />
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-                    Stoppage: <strong>{selectedStoppage}</strong>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.78rem' }}>Student / Employee ID Number</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={passengerIdNo}
+                      onChange={e => setPassengerIdNo(e.target.value)}
+                      placeholder="221002001"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Ticket & Token Preview Card */}
+              <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1.5px solid rgba(217, 119, 6, 0.35)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    DIGITAL TOKEN PREVIEW
+                  </span>
+                  <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>
+                    ⏳ Sent for Conductor Approval
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-input)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', marginBottom: '0.85rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700 }}>RESERVED SEAT</span>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: selectedSeat ? '#fbbf24' : 'var(--text-muted)' }}>
+                      {selectedSeat ? `Seat #${selectedSeat}` : 'Pick Seat Left'}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700 }}>STUDENT FARE</span>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--gub-green-light)' }}>
+                      FREE • GUB SUBSIDY
+                    </div>
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', justifyContent: 'center', background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
                   disabled={!selectedSeat || isSubmitting}
+                  style={{
+                    width: '100%',
+                    padding: '0.9rem 1.5rem',
+                    fontSize: '1rem',
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+                    boxShadow: selectedSeat ? '0 4px 18px rgba(217, 119, 6, 0.5)' : undefined
+                  }}
                 >
                   {isSubmitting ? (
-                    'Processing Reservation...'
-                  ) : selectedSeat ? (
-                    <>
-                      <CheckCircle2 size={18} /> Confirm Seat #{selectedSeat} on {selectedTrip.busNumber}
-                    </>
+                    'Dispatching Seat Request to Conductor...'
                   ) : (
-                    'Please Tap a Seat on the Bus Map'
+                    <>
+                      <CheckCircle2 size={18} /> Confirm Seat #{selectedSeat || '?'} & Get Token
+                    </>
                   )}
                 </button>
-              </form>
+              </div>
             </div>
-          </div>
+          </form>
         )}
       </div>
     </div>

@@ -92,8 +92,8 @@ export const StudentDashboard: React.FC = () => {
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
               <Bus size={24} />
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Live Transport</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Track shuttle buses</p>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Bus Transport</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Schedules & 45-seat booking</p>
           </div>
 
           <div 
@@ -134,14 +134,14 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 2-Column Split: Active Bus Tracker Preview & Recent Notices */}
+      {/* 2-Column Split: Active Bus Schedule Preview & Recent Notices */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
-        {/* Active Bus Ticker */}
+        {/* Active Bus Schedule */}
         <div className="glass-card" style={{ padding: '1.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className="live-pulse-dot" />
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Live Transport Tracker</h3>
+              <Bus size={18} color="var(--gub-green)" />
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>University Bus Fleet (4 Lines)</h3>
             </div>
             <button className="btn btn-outline btn-sm" onClick={() => setActiveTab('transport')}>
               View All <ArrowRight size={14} />
@@ -156,7 +156,7 @@ export const StudentDashboard: React.FC = () => {
                     <h4 style={{ fontSize: '0.98rem', fontWeight: 700 }}>{bus.name}</h4>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{bus.route}</p>
                   </div>
-                  <span className="badge badge-emerald">ETA: {bus.eta}</span>
+                  <span className="badge badge-emerald">{bus.eta}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--gub-green-light)', marginTop: '0.4rem' }}>
                   <MapPin size={14} /> {bus.current_location}

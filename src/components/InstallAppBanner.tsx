@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Smartphone, X, Sparkles } from 'lucide-react';
+import { Download, Smartphone, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const InstallAppBanner: React.FC = () => {
-  const { triggerInstallApp, setIsInstallModalOpen, isAppInstalled } = useApp();
+  const { triggerInstallApp, isAppInstalled } = useApp();
   const [dismissed, setDismissed] = useState<boolean>(true);
 
   useEffect(() => {
-    // Only show if not installed and not previously dismissed in this session
-    const isDismissed = sessionStorage.getItem('gub_install_banner_dismissed');
-    if (!isDismissed && !isAppInstalled) {
+    // Check if app is already downloaded / installed or permanently dismissed
+    const isStandalone = typeof window !== 'undefined' && (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+    const isStoredInstalled = localStorage.getItem('gub_app_installed') === 'true';
+    const isDismissed = localStorage.getItem('gub_install_banner_dismissed') === 'true' || sessionStorage.getItem('gub_install_banner_dismissed') === 'true';
+
+    if (!isStandalone && !isStoredInstalled && !isDismissed && !isAppInstalled) {
       // Delay showing banner slightly for smooth UX
       const timer = setTimeout(() => {
         setDismissed(false);
-      }, 2500);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [isAppInstalled]);
@@ -22,7 +29,14 @@ export const InstallAppBanner: React.FC = () => {
 
   const handleDismiss = () => {
     setDismissed(true);
+    localStorage.setItem('gub_install_banner_dismissed', 'true');
     sessionStorage.setItem('gub_install_banner_dismissed', 'true');
+  };
+
+  const handleInstall = () => {
+    triggerInstallApp();
+    setDismissed(true);
+    localStorage.setItem('gub_app_installed', 'true');
   };
 
   return (
@@ -46,7 +60,7 @@ export const InstallAppBanner: React.FC = () => {
         justifyContent: 'space-between',
         gap: '0.75rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
           <div style={{
             width: '38px',
             height: '38px',
@@ -60,8 +74,8 @@ export const InstallAppBanner: React.FC = () => {
           }}>
             <Smartphone size={20} />
           </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Install Campus 360 App
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -73,10 +87,7 @@ export const InstallAppBanner: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           <button 
             className="btn btn-primary btn-sm"
-            onClick={() => {
-              triggerInstallApp();
-              setDismissed(true);
-            }}
+            onClick={handleInstall}
             style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', minHeight: '32px' }}
           >
             <Download size={14} /> Install
@@ -93,3 +104,4 @@ export const InstallAppBanner: React.FC = () => {
     </div>
   );
 };
+

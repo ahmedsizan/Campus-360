@@ -127,6 +127,7 @@ export const FALLBACK_BUSES: Bus[] = [
 export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
   {
     id: 'bk-gl4-1',
+    token_id: 'GUB-TK-4108',
     bus_id: 'bus-4',
     bus_name: 'Green Line 4 (Bus 01)',
     direction: 'to_campus',
@@ -138,10 +139,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100512',
     user_email: 'shahriar@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
   {
     id: 'bk-gl4-2',
+    token_id: 'GUB-TK-4109',
     bus_id: 'bus-4',
     bus_name: 'Green Line 4 (Bus 01)',
     direction: 'to_campus',
@@ -153,10 +156,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100623',
     user_email: 'mehnaz@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
   {
     id: 'bk-gl1-1',
+    token_id: 'GUB-TK-1021',
     bus_id: 'bus-1',
     bus_name: 'Green Line 1 (Bus 01)',
     direction: 'to_campus',
@@ -168,11 +173,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100678',
     user_email: 'adnan@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
-
   {
     id: 'bk-gl1-2',
+    token_id: 'GUB-TK-1022',
     bus_id: 'bus-1',
     bus_name: 'Green Line 1 (Bus 01)',
     direction: 'to_campus',
@@ -184,10 +190,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100789',
     user_email: 'tasnim@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
   {
     id: 'bk-101',
+    token_id: 'GUB-TK-2034',
     bus_id: 'bus-2',
     bus_name: 'Green Line 2 (Bus 01)',
     direction: 'to_campus',
@@ -199,11 +207,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100234',
     user_email: 'tanvir@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
-
   {
     id: 'bk-102',
+    token_id: 'GUB-TK-2035',
     bus_id: 'bus-2',
     bus_name: 'Green Line 2 (Bus 01)',
     direction: 'to_campus',
@@ -215,10 +224,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100589',
     user_email: 'nafisa@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
   {
     id: 'bk-103',
+    token_id: 'GUB-TK-3045',
     bus_id: 'bus-3',
     bus_name: 'Green Line 3 (Bus 01)',
     direction: 'to_campus',
@@ -230,10 +241,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100312',
     user_email: 'mahmud@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
   {
     id: 'bk-104',
+    token_id: 'GUB-TK-3046',
     bus_id: 'bus-3',
     bus_name: 'Green Line 3 (Bus 01)',
     direction: 'to_campus',
@@ -245,10 +258,12 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100445',
     user_email: 'fariha@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   },
   {
     id: 'bk-105',
+    token_id: 'GUB-TK-3047',
     bus_id: 'bus-3',
     bus_name: 'Green Line 3 (Bus 02)',
     direction: 'to_campus',
@@ -260,6 +275,7 @@ export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
     student_id: '22100981',
     user_email: 'rayhan@green.edu.bd',
     booking_date: new Date().toISOString().split('T')[0],
+    status: 'confirmed',
     created_at: new Date().toISOString()
   }
 ];

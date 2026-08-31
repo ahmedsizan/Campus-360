@@ -169,12 +169,12 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Fleet Live Controller */}
+      {/* Fleet Schedule Controller */}
       <div className="glass-card" style={{ padding: '1.75rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Bus Fleet Dispatch Controller</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Update real-time GPS locations, ETA, and route operating statuses</p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Bus Fleet Route Controller</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Manage shuttle bus routes, shifts, and operating statuses</p>
           </div>
         </div>
 
@@ -184,12 +184,12 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{bus.name}</h4>
                 <span className={`badge ${bus.status === 'active' ? 'badge-emerald' : bus.status === 'delayed' ? 'badge-amber' : 'badge-slate'}`}>
-                  {bus.status}
+                  {bus.status === 'active' ? 'Operational' : bus.status === 'delayed' ? 'Delayed' : 'In Workshop'}
                 </span>
               </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{bus.route}</p>
               <div style={{ fontSize: '0.82rem', marginBottom: '0.75rem' }}>
-                <strong>Loc:</strong> {bus.current_location} • <strong>ETA:</strong> {bus.eta}
+                <strong>Terminal:</strong> {bus.current_location} • <strong>Shift:</strong> {bus.eta}
               </div>
               <button 
                 className="btn btn-secondary btn-sm" 
@@ -201,12 +201,13 @@ export const AdminDashboard: React.FC = () => {
                   setBusStatus(bus.status);
                 }}
               >
-                Dispatch / Edit Status
+                Edit Route Status
               </button>
             </div>
           ))}
         </div>
       </div>
+
 
       {/* Pending Grievances Management Desk */}
       <div className="glass-card" style={{ padding: '1.75rem' }}>
@@ -345,8 +346,8 @@ export const AdminDashboard: React.FC = () => {
       <Modal
         isOpen={!!selectedBusId}
         onClose={() => setSelectedBusId(null)}
-        title="Update Bus Dispatch & GPS Tracking"
-        subtitle="Broadcast live shuttle bus status to commuters"
+        title="Update Bus Route & Shift Details"
+        subtitle="Manage official shuttle bus schedule and route statuses"
       >
         <form onSubmit={handleUpdateBus} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
@@ -356,35 +357,36 @@ export const AdminDashboard: React.FC = () => {
               value={busStatus}
               onChange={e => setBusStatus(e.target.value as BusStatus)}
             >
-              <option value="active">Active (On Route)</option>
-              <option value="delayed">Delayed (Heavy Traffic)</option>
-              <option value="inactive">Inactive (Depot / Maintenance)</option>
+              <option value="active">Operational (In Service)</option>
+              <option value="delayed">Delayed Schedule</option>
+              <option value="inactive">In Stand / Workshop</option>
             </select>
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Current Live Location</label>
+            <label className="form-label">Starting Terminal / Base</label>
             <input 
               type="text" 
               className="form-input" 
               value={busLocation}
               onChange={e => setBusLocation(e.target.value)}
-              placeholder="e.g. Approaching Kazipara Metro Station"
+              placeholder="e.g. Uttara House Building Terminal"
               required
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Estimated Time of Arrival (ETA)</label>
+            <label className="form-label">Departure Shifts / Timetable</label>
             <input 
               type="text" 
               className="form-input" 
               value={busEta}
               onChange={e => setBusEta(e.target.value)}
-              placeholder="e.g. 10 mins or Departs 04:30 PM"
+              placeholder="e.g. 07:30 AM Shift or 01:45 PM Return"
               required
             />
           </div>
+
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setSelectedBusId(null)}>

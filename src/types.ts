@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'admin';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'conductor';
 
 export interface UserProfile {
   id: string;
@@ -33,6 +33,7 @@ export interface Notice {
 
 export type BusStatus = 'active' | 'inactive' | 'delayed';
 export type BusDirection = 'to_campus' | 'from_campus';
+export type BookingStatus = 'pending' | 'confirmed' | 'rejected';
 
 export interface Bus {
   id: string;
@@ -48,6 +49,7 @@ export interface Bus {
 
 export interface BusSeatBooking {
   id: string;
+  token_id?: string; // e.g. 'GUB-TK-8942' (Unique verification security token)
   bus_id: string;
   bus_name: string;
   direction: BusDirection;
@@ -59,8 +61,12 @@ export interface BusSeatBooking {
   student_id: string;
   user_email: string;
   booking_date: string; // YYYY-MM-DD
+  status?: BookingStatus; // 'pending' | 'confirmed' | 'rejected'
+  conductor_notes?: string;
   created_at?: string;
 }
+
+
 
 
 export type FoodCategory = 'breakfast' | 'lunch' | 'snacks' | 'beverage';

@@ -11,6 +11,7 @@ import { Login } from './pages/Login';
 import { StudentDashboard } from './pages/Dashboards/StudentDashboard';
 import { TeacherDashboard } from './pages/Dashboards/TeacherDashboard';
 import { AdminDashboard } from './pages/Dashboards/AdminDashboard';
+import { ConductorDashboard } from './pages/Dashboards/ConductorDashboard';
 import { Notices } from './pages/Notices';
 import { Cafeteria } from './pages/Cafeteria';
 import { Transport } from './pages/Transport';
@@ -67,6 +68,7 @@ const MainAppContent: React.FC = () => {
       case 'dashboard':
         if (profile.role === 'admin') return <AdminDashboard />;
         if (profile.role === 'teacher') return <TeacherDashboard />;
+        if (profile.role === 'conductor') return <ConductorDashboard />;
         return <StudentDashboard />;
       case 'notices':
         return <Notices />;

@@ -12,6 +12,8 @@ import {
   HardDrive, 
   Sparkles,
   CheckCircle2,
+  Check,
+  Palette,
   Download
 } from 'lucide-react';
 
@@ -26,8 +28,6 @@ export const Settings: React.FC = () => {
     complaintFeedback: true
   });
 
-  const [soundEffects, setSoundEffects] = useState(true);
-
   const handleSaveSettings = () => {
     addToast('success', 'Preferences and notification triggers updated.', 'Settings Saved');
   };
@@ -36,38 +36,44 @@ export const Settings: React.FC = () => {
     <div className="animate-fade-in" style={{ maxWidth: '840px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Header */}
       <div className="page-header">
-        <h1 className="page-title">Application Preferences</h1>
-        <p className="page-subtitle">Configure theme appearances, telemetry alerts, and portal configurations</p>
+        <h1 className="page-title">Settings & Preferences</h1>
+        <p className="page-subtitle">Configure theme appearances, departure notifications, and portal configurations</p>
       </div>
 
-      {/* Theme Customizer Card */}
+      {/* Theme Selection Card */}
       <div className="glass-card" style={{ padding: '2rem' }}>
         <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {theme === 'dark' ? <Moon size={20} color="#fbbf24" /> : <Sun size={20} color="#f59e0b" />}
-          Appearance & Visual Theme
+          <Palette size={20} color="var(--gub-green)" /> Interface Color Theme
         </h3>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Select your preferred interface color style. High contrast and glassmorphism enabled.
+          Choose your preferred theme. Green University emerald aesthetic is preserved in both themes.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
           <div
             onClick={() => { if (theme !== 'dark') toggleTheme(); }}
             className="glass-card glass-card-interactive"
             style={{
               padding: '1.25rem',
-              background: '#090d16',
-              border: theme === 'dark' ? '2px solid var(--gub-green)' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: theme === 'dark' ? '0 0 20px rgba(16,185,129,0.3)' : 'none'
+              border: theme === 'dark' ? '2px solid var(--gub-green)' : '1px solid var(--border-subtle)',
+              background: '#0a0f1d',
+              color: '#ffffff',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ fontWeight: 700, color: '#f8fafc' }}>🌙 Cyber Dark</span>
-              {theme === 'dark' && <CheckCircle2 size={18} color="#10b981" />}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'rgba(255, 255, 255, 0.1)' }}>
+                <Moon size={20} color="#10b981" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700 }}>Dark Slate Theme</div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>High-contrast dark mode</div>
+              </div>
             </div>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-              Sleek deep navy theme with emerald neon highlights.
-            </p>
+            {theme === 'dark' && <Check size={18} color="#10b981" />}
           </div>
 
           <div
@@ -75,18 +81,25 @@ export const Settings: React.FC = () => {
             className="glass-card glass-card-interactive"
             style={{
               padding: '1.25rem',
+              border: theme === 'light' ? '2px solid var(--gub-green)' : '1px solid var(--border-subtle)',
               background: '#f8fafc',
-              border: theme === 'light' ? '2px solid var(--gub-green)' : '1px solid rgba(0,0,0,0.1)',
-              boxShadow: theme === 'light' ? '0 0 20px rgba(16,185,129,0.3)' : 'none'
+              color: '#0f172a',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ fontWeight: 700, color: '#0f172a' }}>☀️ Crisp Light</span>
-              {theme === 'light' && <CheckCircle2 size={18} color="#10b981" />}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'rgba(0, 0, 0, 0.06)' }}>
+                <Sun size={20} color="#f59e0b" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700 }}>Clean Light Theme</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Modern daylight aesthetic</div>
+              </div>
             </div>
-            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              Clean bright daylight theme with clear readability.
-            </p>
+            {theme === 'light' && <Check size={18} color="#10b981" />}
           </div>
         </div>
       </div>
@@ -97,12 +110,12 @@ export const Settings: React.FC = () => {
           <Bell size={20} color="var(--gub-green)" /> Push & In-App Notifications
         </h3>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Manage real-time notifications received during campus hours.
+          Manage notifications received during campus hours.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {[
-            { key: 'busAlerts', title: 'Live Bus Arrival Alerts', desc: 'Notify when bus enters your 2km radius' },
+            { key: 'busAlerts', title: 'Bus Departure Alerts', desc: 'Notify before scheduled shift departure' },
             { key: 'noticeAlerts', title: 'Emergency & Academic Circulars', desc: 'Instant alerts for exam schedules and semester advisings' },
             { key: 'cafeteriaOrder', title: 'Cafeteria Order Ready Notifications', desc: 'Token alerts when food is ready for counter pickup' },
             { key: 'complaintFeedback', title: 'Grievance Resolution Updates', desc: 'Official administrative feedback on submitted complaints' },
@@ -158,14 +171,14 @@ export const Settings: React.FC = () => {
           <Database size={20} color="var(--gub-cyan)" /> Connected Cloud Infrastructure
         </h3>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Live Supabase PostgreSQL Backend connection & Auth state
+          Supabase PostgreSQL Backend connection & Auth state
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div style={{ padding: '1rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>DATABASE STATUS</div>
             <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gub-green)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
-              <span className="live-pulse-dot" /> Supabase Connected
+              ✓ Supabase Connected
             </div>
           </div>
 

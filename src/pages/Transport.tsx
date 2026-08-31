@@ -28,7 +28,8 @@ import {
   Send,
   Info,
   ChevronRight,
-  RotateCcw
+  RotateCcw,
+  Maximize2
 } from 'lucide-react';
 
 type TransportTab = 'fleet' | 'green_line_1_schedule' | 'green_line_2_schedule' | 'green_line_3_schedule' | 'green_line_4_schedule' | 'my_passes';
@@ -40,12 +41,15 @@ export const Transport: React.FC = () => {
     loadingBuses, 
     seatBookings, 
     bookSeat, 
-    cancelSeatBooking 
+    cancelSeatBooking,
+    refetchSeatBookings,
+    addToast
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<TransportTab>('fleet');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'all' | BusStatus>('all');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Modals for all 4 Green Lines
   const [isGL1ModalOpen, setIsGL1ModalOpen] = useState(false);
@@ -57,30 +61,39 @@ export const Transport: React.FC = () => {
   const [activeBoardingPass, setActiveBoardingPass] = useState<BusSeatBooking | null>(null);
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
 
-  // Filter Bookings for Current User
-  const myPasses = seatBookings.filter(
-    b => profile?.email && b.user_email.toLowerCase() === profile.email.toLowerCase()
-  );
+  // Filter Bookings for Current User (Multi-device matching by email OR ID)
+  const myPasses = seatBookings.filter(b => {
+    if (!profile) return false;
+    const userEmail = (profile.email || '').trim().toLowerCase();
+    const bookingEmail = (b.user_email || '').trim().toLowerCase();
+    const userIdNo = (profile.id_no || '').trim().toLowerCase();
+    const bookingIdNo = (b.student_id || '').trim().toLowerCase();
 
-  // Status Badge Helper
+    const matchesEmail = Boolean(userEmail && bookingEmail && bookingEmail === userEmail);
+    const matchesIdNo = Boolean(userIdNo && bookingIdNo && bookingIdNo === userIdNo);
+
+    return matchesEmail || matchesIdNo;
+  });
+
+  // Status Badge Helper (Clean Scheduled Transit Status)
   const getStatusBadge = (status: BusStatus) => {
     if (status === 'active') {
       return (
         <span className="badge badge-emerald">
-          <span className="live-pulse-dot" style={{ width: '7px', height: '7px' }} /> Live On Route
+          ✓ Operational
         </span>
       );
     }
     if (status === 'delayed') {
       return (
         <span className="badge badge-amber">
-          <span className="delayed-pulse-dot" style={{ width: '7px', height: '7px' }} /> Delayed
+          Delayed Schedule
         </span>
       );
     }
     return (
       <span className="badge badge-slate">
-        <span className="inactive-dot" style={{ width: '7px', height: '7px' }} /> In Workshop / Stand
+        In Stand / Workshop
       </span>
     );
   };
@@ -162,16 +175,16 @@ export const Transport: React.FC = () => {
             <span className="badge badge-emerald">Green University Transit Fleet</span>
             <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Purbachal Permanent Campus</span>
           </div>
-          <h1 className="page-title">University Transport & Shuttle Tracker</h1>
+          <h1 className="page-title">University Transport & Bus Reservation</h1>
           <p className="page-subtitle">
-            Real-time GPS telemetry, accurate stop-by-stop schedules, and 45-seat bus seat booking for Lines 1, 2, 3 & 4
+            Official stop-by-stop route schedules, shift timetables, and 45-seat bus seat reservation for Lines 1, 2, 3 & 4
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', padding: '0.6rem 1.1rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-          <span className="live-pulse-dot" />
+          <Calendar size={14} color="var(--gub-green-light)" />
           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--gub-green-light)' }}>
-            GPS Telemetry Active
+            Official Transit Schedule
           </span>
         </div>
       </div>
@@ -356,7 +369,7 @@ export const Transport: React.FC = () => {
                 className={`filter-tab-btn ${selectedStatus === 'active' ? 'active' : ''}`}
                 onClick={() => setSelectedStatus('active')}
               >
-                🟢 Active ({buses.filter(b => b.status === 'active').length})
+                🟢 Operational ({buses.filter(b => b.status === 'active').length})
               </button>
               <button
                 className={`filter-tab-btn ${selectedStatus === 'delayed' ? 'active' : ''}`}
@@ -368,7 +381,7 @@ export const Transport: React.FC = () => {
                 className={`filter-tab-btn ${selectedStatus === 'inactive' ? 'active' : ''}`}
                 onClick={() => setSelectedStatus('inactive')}
               >
-                ⚪ Workshop ({buses.filter(b => b.status === 'inactive').length})
+                ⚪ In Workshop ({buses.filter(b => b.status === 'inactive').length})
               </button>
             </div>
 
@@ -425,11 +438,11 @@ export const Transport: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Live Telemetry Info */}
+                    {/* Route Location & Timetable Info */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                       <div style={{ padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
-                          <MapPin size={12} color={theme.color} /> CURRENT LOCATION
+                          <MapPin size={12} color={theme.color} /> ROUTE TERMINAL
                         </div>
                         <div style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                           {bus.current_location}
@@ -438,7 +451,7 @@ export const Transport: React.FC = () => {
 
                       <div style={{ padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
-                          <Clock size={12} color={theme.color} /> ESTIMATED ARRIVAL
+                          <Clock size={12} color={theme.color} /> SCHEDULED TIME
                         </div>
                         <div style={{ fontSize: '0.88rem', fontWeight: 800, color: theme.lightColor }}>
                           {bus.eta}
@@ -523,9 +536,9 @@ export const Transport: React.FC = () => {
             <button
               className="btn btn-primary"
               onClick={() => setIsGL1ModalOpen(true)}
-              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
-              <Armchair size={17} /> Open 2-Bus Seat Booking
+              <Maximize2 size={16} /> Open Full-Screen Booking Terminal
             </button>
           </div>
 
@@ -564,7 +577,7 @@ export const Transport: React.FC = () => {
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
                     onClick={() => setIsGL1ModalOpen(true)}
                   >
-                    <Armchair size={14} /> Book Seat on {trip.busNumber}
+                    <Armchair size={14} /> Select Seat on {trip.busNumber}
                   </button>
                 </div>
               ))}
@@ -576,7 +589,7 @@ export const Transport: React.FC = () => {
               <RotateCcw size={18} color="var(--gub-purple)" /> Outbound: Campus ➔ Mirpur (Return)
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-              Same stoppage intervals: 1:45 PM (Bus 01) and 4:45 PM (Bus 02)
+              2 dedicated buses departing Campus in 2 afternoon/evening return shifts:
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
@@ -606,7 +619,7 @@ export const Transport: React.FC = () => {
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
                     onClick={() => setIsGL1ModalOpen(true)}
                   >
-                    <Armchair size={14} /> Book Return Seat ({trip.departureTime})
+                    <Armchair size={14} /> Select Return Seat ({trip.departureTime})
                   </button>
                 </div>
               ))}
@@ -622,7 +635,7 @@ export const Transport: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           <div className="glass-card" style={{
             padding: '2rem',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(5, 150, 105, 0.06) 100%)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.06) 100%)',
             border: '1px solid rgba(16, 185, 129, 0.35)',
             display: 'flex',
             flexWrap: 'wrap',
@@ -643,8 +656,9 @@ export const Transport: React.FC = () => {
             <button
               className="btn btn-primary"
               onClick={() => setIsGL2ModalOpen(true)}
+              style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
-              <Armchair size={17} /> Open 3-Bus Seat Booking
+              <Maximize2 size={16} /> Open Full-Screen Booking Terminal
             </button>
           </div>
 
@@ -762,9 +776,9 @@ export const Transport: React.FC = () => {
             <button
               className="btn btn-primary"
               onClick={() => setIsGL3ModalOpen(true)}
-              style={{ background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
-              <Armchair size={17} /> Open 3-Bus Seat Booking
+              <Maximize2 size={16} /> Open Full-Screen Booking Terminal
             </button>
           </div>
 
@@ -803,7 +817,7 @@ export const Transport: React.FC = () => {
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
                     onClick={() => setIsGL3ModalOpen(true)}
                   >
-                    <Armchair size={14} /> Book Seat on {trip.busNumber}
+                    <Armchair size={14} /> Select Seat on {trip.busNumber}
                   </button>
                 </div>
               ))}
@@ -845,7 +859,7 @@ export const Transport: React.FC = () => {
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
                     onClick={() => setIsGL3ModalOpen(true)}
                   >
-                    <Armchair size={14} /> Book Return Seat ({trip.departureTime})
+                    <Armchair size={14} /> Select Return Seat ({trip.departureTime})
                   </button>
                 </div>
               ))}
@@ -882,9 +896,9 @@ export const Transport: React.FC = () => {
             <button
               className="btn btn-primary"
               onClick={() => setIsGL4ModalOpen(true)}
-              style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
-              <Armchair size={17} /> Open 2-Bus Seat Booking
+              <Maximize2 size={16} /> Open Full-Screen Booking Terminal
             </button>
           </div>
 
@@ -979,13 +993,28 @@ export const Transport: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'my_passes' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>My Reserved Bus Passes</h2>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 Active digital passes and verified boarding tokens for Green University transport
               </p>
             </div>
+
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={async () => {
+                setIsSyncing(true);
+                await refetchSeatBookings();
+                setIsSyncing(false);
+                addToast('success', 'Bus passes refreshed and synced with cloud database.', 'Cloud Synced');
+              }}
+              disabled={isSyncing}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <RotateCcw size={14} className={isSyncing ? 'animate-spin' : ''} />
+              {isSyncing ? 'Syncing...' : 'Sync Cloud Passes'}
+            </button>
           </div>
 
           {myPasses.length === 0 ? (
@@ -1044,9 +1073,19 @@ export const Transport: React.FC = () => {
                   >
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                        <span className={`badge ${passTheme.badgeClass}`}>
-                          ✓ Active Pass
-                        </span>
+                        {pass.status === 'confirmed' ? (
+                          <span className="badge badge-emerald">
+                            ✓ Approved by Conductor
+                          </span>
+                        ) : pass.status === 'rejected' ? (
+                          <span className="badge badge-slate" style={{ color: 'var(--gub-rose)', borderColor: 'rgba(239, 68, 68, 0.4)' }}>
+                            ✕ Request Declined
+                          </span>
+                        ) : (
+                          <span className="badge badge-amber">
+                            ⏳ Pending Conductor Approval
+                          </span>
+                        )}
                         <span style={{ fontSize: '1.5rem', fontWeight: 900, color: passTheme.lightColor }}>
                           Seat #{pass.seat_number}
                         </span>
