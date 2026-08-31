@@ -226,11 +226,12 @@ ON CONFLICT (id) DO NOTHING;
 -- Seed Buses
 INSERT INTO public.buses (id, name, route, status, current_location, eta, schedule, total_seats)
 VALUES 
-  ('bus-1', 'Green Line 1 (Mirpur Route)', 'Mirpur ➔ Kuril Flyover ➔ Purbachal Campus', 'active', 'Approaching Kuril Flyover (2 Buses Operating)', '10 mins', ARRAY['07:30 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'], 45),
-  ('bus-2', 'Green Line 2 (Uttara Route)', 'Uttara House Building ➔ BNS Center ➔ Kuril Flyover ➔ Purbachal Campus', 'active', 'Approaching Kuril Flyover (3 Buses Operating)', '8 mins', ARRAY['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'], 45),
-  ('bus-3', 'Green Line 3 (Bishnandi Ferry Ghat Route)', 'Bishnandi Ferry Ghat ➔ Araihazar ➔ Gawsia ➔ Purbachal Campus', 'active', 'Passing Araihazar (3 Buses Operating)', '10 mins', ARRAY['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'], 45),
-  ('bus-4', 'Green Line 4 (Savar Route)', 'Savar ➔ Kuril Flyover ➔ Purbachal Campus', 'active', 'Approaching Kuril Flyover (2 Buses Operating)', '15 mins', ARRAY['07:00 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'], 45)
+  ('bus-1', 'Green Line 1 (Mirpur Route)', 'Mirpur (Terminal) ➔ Kuril Flyover ➔ Green University Campus', 'active', 'Passing Kuril Flyover (Bus 01 in Transit)', '15 mins to Campus (08:30 AM Shift)', ARRAY['07:30 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'], 45),
+  ('bus-2', 'Green Line 2 (Uttara Route)', 'Uttara House Building ➔ Uttara BNS Center ➔ Kuril Flyover ➔ Green University Campus', 'active', 'Passing Uttara BNS Center (Bus 01 in Transit)', '8 mins to Kuril • 25 mins to Campus', ARRAY['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'], 45),
+  ('bus-3', 'Green Line 3 (Bishnandi Ferry Ghat Route)', 'Bishnandi Ferry Ghat ➔ Araihazar ➔ Gawsia ➔ Green University Campus', 'active', 'Passing Araihazar Bazaar (Bus 01 in Transit)', '12 mins to Gawsia • 30 mins to Campus', ARRAY['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'], 45),
+  ('bus-4', 'Green Line 4 (Savar Route)', 'Savar (Terminal) ➔ Kuril Flyover ➔ Green University Campus', 'active', 'Approaching Kuril Flyover from Savar (Bus 01 in Transit)', '18 mins to Campus (08:30 AM Shift)', ARRAY['07:00 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'], 45)
 ON CONFLICT (id) DO NOTHING;
+
 
 
 

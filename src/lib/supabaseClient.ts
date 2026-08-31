@@ -83,44 +83,45 @@ export const FALLBACK_BUSES: Bus[] = [
   {
     id: 'bus-1',
     name: 'Green Line 1 (Mirpur Route)',
-    route: 'Mirpur ➔ Kuril Flyover ➔ Purbachal Campus',
+    route: 'Mirpur (Terminal) ➔ Kuril Flyover ➔ Green University Campus',
     status: 'active',
-    current_location: 'Approaching Kuril Flyover (2 Buses Operating)',
-    eta: '10 mins',
+    current_location: 'Passing Kuril Flyover (Bus 01 in Transit)',
+    eta: '15 mins to Campus (08:30 AM Shift)',
     schedule: ['07:30 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'],
     total_seats: 45
   },
   {
     id: 'bus-2',
     name: 'Green Line 2 (Uttara Route)',
-    route: 'Uttara House Building ➔ BNS Center ➔ Kuril Flyover ➔ Purbachal Campus',
+    route: 'Uttara House Building ➔ Uttara BNS Center ➔ Kuril Flyover ➔ Green University Campus',
     status: 'active',
-    current_location: 'Approaching Kuril Flyover (3 Buses Operating)',
-    eta: '8 mins',
+    current_location: 'Passing Uttara BNS Center (Bus 01 in Transit)',
+    eta: '8 mins to Kuril • 25 mins to Campus',
     schedule: ['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'],
     total_seats: 45
   },
   {
     id: 'bus-3',
     name: 'Green Line 3 (Bishnandi Ferry Ghat Route)',
-    route: 'Bishnandi Ferry Ghat ➔ Araihazar ➔ Gawsia ➔ Purbachal Campus',
+    route: 'Bishnandi Ferry Ghat ➔ Araihazar ➔ Gawsia ➔ Green University Campus',
     status: 'active',
-    current_location: 'Passing Araihazar (3 Buses Operating)',
-    eta: '10 mins',
+    current_location: 'Passing Araihazar Bazaar (Bus 01 in Transit)',
+    eta: '12 mins to Gawsia • 30 mins to Campus',
     schedule: ['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'],
     total_seats: 45
   },
   {
     id: 'bus-4',
     name: 'Green Line 4 (Savar Route)',
-    route: 'Savar ➔ Kuril Flyover ➔ Purbachal Campus',
+    route: 'Savar (Terminal) ➔ Kuril Flyover ➔ Green University Campus',
     status: 'active',
-    current_location: 'Approaching Kuril Flyover (2 Buses Operating)',
-    eta: '15 mins',
+    current_location: 'Approaching Kuril Flyover from Savar (Bus 01 in Transit)',
+    eta: '18 mins to Campus (08:30 AM Shift)',
     schedule: ['07:00 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'],
     total_seats: 45
   }
 ];
+
 
 
 export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [

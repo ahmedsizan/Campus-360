@@ -174,7 +174,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <span className="badge badge-emerald">
+              <span className="badge badge-blue">
                 <Sparkles size={12} /> Green Line 1 • 2 Buses Fleet
               </span>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>45 Seats Per Bus</span>
@@ -185,7 +185,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               {selectedTrip 
                 ? `Departure: ${selectedTrip.departureTime} • Pick your seat from the 45-seat cabin map` 
-                : 'Mirpur ➔ Kuril Flyover ➔ Green University Campus'}
+                : 'Mirpur (Terminal) ➔ Kuril Flyover ➔ Green University Campus'}
             </p>
           </div>
 
@@ -220,6 +220,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                   type="button"
                   className={`direction-pill-btn ${direction === 'to_campus' ? 'active' : ''}`}
                   onClick={() => setDirection('to_campus')}
+                  style={{ background: direction === 'to_campus' ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' : undefined }}
                 >
                   <Navigation size={15} /> To Campus (Mirpur ➔ Varsity)
                 </button>
@@ -227,6 +228,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                   type="button"
                   className={`direction-pill-btn ${direction === 'from_campus' ? 'active' : ''}`}
                   onClick={() => setDirection('from_campus')}
+                  style={{ background: direction === 'from_campus' ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' : undefined }}
                 >
                   <RotateCcw size={15} /> Return (Varsity ➔ Mirpur)
                 </button>
@@ -234,7 +236,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
             </div>
 
             <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <BusIcon size={16} color="var(--gub-green)" />
+              <BusIcon size={16} color="#3b82f6" />
               {direction === 'to_campus' 
                 ? 'Select a Bus from Mirpur Terminal (2 Buses Operating):' 
                 : 'Select a Return Bus from Campus Terminal to Mirpur:'}
@@ -252,7 +254,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                     className="glass-card glass-card-interactive"
                     style={{
                       padding: '1.5rem',
-                      borderLeft: `4px solid ${idx === 0 ? '#10b981' : '#06b6d4'}`,
+                      borderLeft: `4px solid ${idx === 0 ? '#3b82f6' : '#60a5fa'}`,
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -262,10 +264,10 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                   >
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
-                        <span className={`badge ${idx === 0 ? 'badge-emerald' : 'badge-cyan'}`}>
+                        <span className={`badge ${idx === 0 ? 'badge-blue' : 'badge-cyan'}`}>
                           {trip.busNumber} • {trip.shiftTitle}
                         </span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--gub-green-light)' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#60a5fa' }}>
                           {availableCount} / 45 Seats
                         </span>
                       </div>
@@ -294,7 +296,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                     <button
                       type="button"
                       className="btn btn-primary btn-sm"
-                      style={{ width: '100%', justifyContent: 'center' }}
+                      style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
                       onClick={e => {
                         e.stopPropagation();
                         setSelectedTrip(trip);
@@ -326,11 +328,11 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                   <ArrowLeft size={14} /> Change Bus ({selectedTrip.busNumber})
                 </button>
                 <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {selectedTrip.busName} • Departure @ <span style={{ color: 'var(--gub-green-light)' }}>{selectedTrip.departureTime}</span>
+                  {selectedTrip.busName} • Departure @ <span style={{ color: '#60a5fa' }}>{selectedTrip.departureTime}</span>
                 </div>
               </div>
 
-              <span className="badge badge-emerald" style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}>
+              <span className="badge badge-blue" style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}>
                 {45 - getBookingsForTrip(selectedTrip).length} of 45 Seats Available
               </span>
             </div>
@@ -352,7 +354,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
               <form onSubmit={handleConfirmReservation} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 <div>
                   <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <MapPin size={14} color="var(--gub-green)" /> Select Boarding Stoppage
+                    <MapPin size={14} color="#3b82f6" /> Select Boarding Stoppage
                   </label>
                   <select
                     className="form-input"
@@ -393,10 +395,10 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                 </div>
 
                 {/* Selected Seat Summary */}
-                <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>SELECTED SEAT</span>
-                    <span style={{ fontSize: '1.4rem', fontWeight: 900, color: selectedSeat ? 'var(--gub-green-light)' : 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 900, color: selectedSeat ? '#60a5fa' : 'var(--text-muted)' }}>
                       {selectedSeat ? `Seat #${selectedSeat}` : 'Tap a seat to pick'}
                     </span>
                   </div>
@@ -408,7 +410,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', justifyContent: 'center' }}
+                  style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', justifyContent: 'center', background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
                   disabled={!selectedSeat || isSubmitting}
                 >
                   {isSubmitting ? (
@@ -425,6 +427,7 @@ export const GreenLine1Modal: React.FC<GreenLine1ModalProps> = ({
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
