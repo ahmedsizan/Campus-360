@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Bus, Complaint, FoodItem, LostFoundItem, Notice } from '../types';
+import { Bus, BusSeatBooking, Complaint, FoodItem, LostFoundItem, Notice } from '../types';
 
 // Supabase credentials with production fallback from DOCUMENTATION.md
 const SUPABASE_URL = 
@@ -82,41 +82,188 @@ export const FALLBACK_NOTICES: Notice[] = [
 export const FALLBACK_BUSES: Bus[] = [
   {
     id: 'bus-1',
-    name: 'Green Express 01',
-    route: 'Mirpur 10 ➔ Kazipara ➔ Agargaon ➔ Purbachal Campus',
+    name: 'Green Line 1 (Mirpur Route)',
+    route: 'Mirpur ➔ Kuril Flyover ➔ Purbachal Campus',
     status: 'active',
-    current_location: 'Approaching Kazipara Metro Station',
-    eta: '12 mins',
-    schedule: ['07:30 AM', '09:00 AM', '01:30 PM', '04:30 PM']
+    current_location: 'Approaching Kuril Flyover (2 Buses Operating)',
+    eta: '10 mins',
+    schedule: ['07:30 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'],
+    total_seats: 45
   },
   {
     id: 'bus-2',
-    name: 'Green Express 02',
-    route: 'Uttara Sector 7 ➔ Airport ➔ Kuril ➔ Purbachal Campus',
+    name: 'Green Line 2 (Uttara Route)',
+    route: 'Uttara House Building ➔ BNS Center ➔ Kuril Flyover ➔ Purbachal Campus',
     status: 'active',
-    current_location: 'Passing Kuril Flyover Toll Plaza',
+    current_location: 'Approaching Kuril Flyover (3 Buses Operating)',
     eta: '8 mins',
-    schedule: ['07:45 AM', '09:15 AM', '02:00 PM', '05:00 PM']
+    schedule: ['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'],
+    total_seats: 45
   },
   {
     id: 'bus-3',
-    name: 'Green Express 03',
-    route: 'Mirpur 14 ➔ Kachukhet ➔ Banani ➔ Purbachal Campus',
-    status: 'delayed',
-    current_location: 'Stuck at Banani Signal (Heavy Traffic)',
-    eta: '25 mins',
-    schedule: ['08:00 AM', '10:00 AM', '02:30 PM', '05:30 PM']
+    name: 'Green Line 3 (Bishnandi Ferry Ghat Route)',
+    route: 'Bishnandi Ferry Ghat ➔ Araihazar ➔ Gawsia ➔ Purbachal Campus',
+    status: 'active',
+    current_location: 'Passing Araihazar (3 Buses Operating)',
+    eta: '10 mins',
+    schedule: ['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'],
+    total_seats: 45
   },
   {
     id: 'bus-4',
-    name: 'Green Express 04',
-    route: 'Savar ➔ Hemayetpur ➔ Gabtoli ➔ Purbachal Campus',
-    status: 'inactive',
-    current_location: 'Campus Workshop — Scheduled Maintenance',
-    eta: 'Departs 04:30 PM',
-    schedule: ['07:00 AM', '01:00 PM', '04:30 PM']
+    name: 'Green Line 4 (Savar Route)',
+    route: 'Savar ➔ Kuril Flyover ➔ Purbachal Campus',
+    status: 'active',
+    current_location: 'Approaching Kuril Flyover (2 Buses Operating)',
+    eta: '15 mins',
+    schedule: ['07:00 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'],
+    total_seats: 45
   }
 ];
+
+
+export const FALLBACK_SEAT_BOOKINGS: BusSeatBooking[] = [
+  {
+    id: 'bk-gl4-1',
+    bus_id: 'bus-4',
+    bus_name: 'Green Line 4 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:00 AM',
+    stoppage: 'Savar',
+    stoppage_time: '07:00 AM',
+    seat_number: 8,
+    student_name: 'Shahriar Kabir',
+    student_id: '22100512',
+    user_email: 'shahriar@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'bk-gl4-2',
+    bus_id: 'bus-4',
+    bus_name: 'Green Line 4 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:00 AM',
+    stoppage: 'Kuril Flyover',
+    stoppage_time: '08:00 AM',
+    seat_number: 15,
+    student_name: 'Mehnaz Parvin',
+    student_id: '22100623',
+    user_email: 'mehnaz@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'bk-gl1-1',
+    bus_id: 'bus-1',
+    bus_name: 'Green Line 1 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:30 AM',
+    stoppage: 'Mirpur',
+    stoppage_time: '07:30 AM',
+    seat_number: 6,
+    student_name: 'Adnan Sami',
+    student_id: '22100678',
+    user_email: 'adnan@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+
+  {
+    id: 'bk-gl1-2',
+    bus_id: 'bus-1',
+    bus_name: 'Green Line 1 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:30 AM',
+    stoppage: 'Kuril Flyover',
+    stoppage_time: '08:00 AM',
+    seat_number: 11,
+    student_name: 'Tasnim Hossain',
+    student_id: '22100789',
+    user_email: 'tasnim@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'bk-101',
+    bus_id: 'bus-2',
+    bus_name: 'Green Line 2 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:30 AM',
+    stoppage: 'Uttara House Building',
+    stoppage_time: '07:30 AM',
+    seat_number: 4,
+    student_name: 'Tanvir Ahmed',
+    student_id: '22100234',
+    user_email: 'tanvir@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+
+  {
+    id: 'bk-102',
+    bus_id: 'bus-2',
+    bus_name: 'Green Line 2 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:30 AM',
+    stoppage: 'Uttara BNS Center',
+    stoppage_time: '07:40 AM',
+    seat_number: 7,
+    student_name: 'Nafisa Islam',
+    student_id: '22100589',
+    user_email: 'nafisa@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'bk-103',
+    bus_id: 'bus-3',
+    bus_name: 'Green Line 3 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:30 AM',
+    stoppage: 'Bishnandi Ferry Ghat',
+    stoppage_time: '07:30 AM',
+    seat_number: 5,
+    student_name: 'Mahmudul Hasan',
+    student_id: '22100312',
+    user_email: 'mahmud@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'bk-104',
+    bus_id: 'bus-3',
+    bus_name: 'Green Line 3 (Bus 01)',
+    direction: 'to_campus',
+    trip_slot: '07:30 AM',
+    stoppage: 'Araihazar',
+    stoppage_time: '07:50 AM',
+    seat_number: 9,
+    student_name: 'Fariha Chowdhury',
+    student_id: '22100445',
+    user_email: 'fariha@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'bk-105',
+    bus_id: 'bus-3',
+    bus_name: 'Green Line 3 (Bus 02)',
+    direction: 'to_campus',
+    trip_slot: '09:30 AM',
+    stoppage: 'Gawsia',
+    stoppage_time: '10:10 AM',
+    seat_number: 14,
+    student_name: 'Rayhan Uddin',
+    student_id: '22100981',
+    user_email: 'rayhan@green.edu.bd',
+    booking_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  }
+];
+
+
 
 export const FALLBACK_FOOD_ITEMS: FoodItem[] = [
   {

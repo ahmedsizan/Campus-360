@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, FALLBACK_BUSES, FALLBACK_COMPLAINTS, FALLBACK_FOOD_ITEMS, FALLBACK_LOST_FOUND, FALLBACK_NOTICES } from '../lib/supabaseClient';
+import { supabase, FALLBACK_BUSES, FALLBACK_COMPLAINTS, FALLBACK_FOOD_ITEMS, FALLBACK_LOST_FOUND, FALLBACK_NOTICES, FALLBACK_SEAT_BOOKINGS } from '../lib/supabaseClient';
 import { 
   Bus, 
+  BusSeatBooking,
   BusStatus, 
   CartItem, 
   Complaint, 
@@ -36,6 +37,14 @@ interface AppContextType {
   loadingBuses: boolean;
   updateBusStatus: (busId: string, status: BusStatus, location: string, eta: string) => Promise<boolean>;
   refetchBuses: () => Promise<void>;
+
+  // Bus Seat Reservation
+  seatBookings: BusSeatBooking[];
+  loadingSeatBookings: boolean;
+  bookSeat: (booking: Omit<BusSeatBooking, 'id' | 'created_at'>) => Promise<{ success: boolean; message?: string; booking?: BusSeatBooking }>;
+  cancelSeatBooking: (id: string) => Promise<boolean>;
+  refetchSeatBookings: () => Promise<void>;
+
 
   // Cafeteria & Cart (Supabase)
   foodItems: FoodItem[];
@@ -291,6 +300,108 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const e = err as Error;
       addToast('error', e.message || 'Failed to update bus', 'Error');
       return false;
+    }
+  };
+
+  // ==========================================
+  // 2.5 Bus Seat Bookings (Supabase + LocalStorage)
+  // ==========================================
+  const [seatBookings, setSeatBookings] = useState<BusSeatBooking[]>(() => {
+    try {
+      const saved = localStorage.getItem('gub_bus_seat_bookings');
+      return saved ? JSON.parse(saved) : FALLBACK_SEAT_BOOKINGS;
+    } catch {
+      return FALLBACK_SEAT_BOOKINGS;
+    }
+  });
+  const [loadingSeatBookings, setLoadingSeatBookings] = useState(true);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gub_bus_seat_bookings', JSON.stringify(seatBookings));
+    } catch (e) {
+      console.warn('Failed to persist seat bookings to localStorage', e);
+    }
+  }, [seatBookings]);
+
+  const fetchSeatBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bus_seat_bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Supabase fetch seat bookings note:', error.message);
+        // keep current/localStorage state
+      } else if (data && data.length > 0) {
+        setSeatBookings(data as BusSeatBooking[]);
+      }
+    } catch {
+      // keep fallback
+    } finally {
+      setLoadingSeatBookings(false);
+    }
+  };
+
+  const bookSeat = async (
+    bookingData: Omit<BusSeatBooking, 'id' | 'created_at'>
+  ): Promise<{ success: boolean; message?: string; booking?: BusSeatBooking }> => {
+    // Check if seat is already occupied for this specific bus, trip slot, and direction on the same booking date
+    const isOccupied = seatBookings.some(
+      b =>
+        b.bus_id === bookingData.bus_id &&
+        b.trip_slot === bookingData.trip_slot &&
+        b.direction === bookingData.direction &&
+        b.seat_number === bookingData.seat_number &&
+        b.booking_date === bookingData.booking_date
+    );
+
+    if (isOccupied) {
+      addToast('error', `Seat #${bookingData.seat_number} has already been reserved by another student!`, 'Seat Unavailable');
+      return { success: false, message: 'Seat already reserved' };
+    }
+
+    const bookingId = `bk-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    const fullBooking: BusSeatBooking = {
+      ...bookingData,
+      id: bookingId,
+      created_at: new Date().toISOString()
+    };
+
+    // Optimistically update state and localStorage
+    setSeatBookings(prev => [fullBooking, ...prev]);
+
+    try {
+      const { error } = await supabase.from('bus_seat_bookings').insert([fullBooking]);
+      if (error) {
+        console.warn('Supabase bus_seat_bookings insert fallback to local:', error.message);
+      }
+      addToast(
+        'success',
+        `Seat #${fullBooking.seat_number} reserved successfully on ${fullBooking.bus_name} (${fullBooking.stoppage_time})!`,
+        'Bus Seat Reserved'
+      );
+      return { success: true, booking: fullBooking };
+    } catch {
+      addToast(
+        'success',
+        `Seat #${fullBooking.seat_number} reserved on ${fullBooking.bus_name} (${fullBooking.stoppage_time})!`,
+        'Bus Seat Reserved'
+      );
+      return { success: true, booking: fullBooking };
+    }
+  };
+
+  const cancelSeatBooking = async (id: string): Promise<boolean> => {
+    setSeatBookings(prev => prev.filter(b => b.id !== id));
+    try {
+      await supabase.from('bus_seat_bookings').delete().eq('id', id);
+      addToast('info', 'Bus seat reservation cancelled.', 'Reservation Cancelled');
+      return true;
+    } catch {
+      addToast('info', 'Bus seat reservation cancelled.', 'Reservation Cancelled');
+      return true;
     }
   };
 
@@ -571,6 +682,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetchLostFound();
     fetchComplaints();
     fetchOrders();
+    fetchSeatBookings();
 
     // Subscribe to Postgres database realtime events
     const noticesChannel = supabase
@@ -584,6 +696,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .channel('realtime:buses')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'buses' }, () => {
         fetchBuses();
+      })
+      .subscribe();
+
+    const seatBookingsChannel = supabase
+      .channel('realtime:bus_seat_bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bus_seat_bookings' }, () => {
+        fetchSeatBookings();
       })
       .subscribe();
 
@@ -604,6 +723,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       supabase.removeChannel(noticesChannel);
       supabase.removeChannel(busesChannel);
+      supabase.removeChannel(seatBookingsChannel);
       supabase.removeChannel(complaintsChannel);
       supabase.removeChannel(lostFoundChannel);
     };
@@ -625,6 +745,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadingBuses,
         updateBusStatus,
         refetchBuses: fetchBuses,
+        seatBookings,
+        loadingSeatBookings,
+        bookSeat,
+        cancelSeatBooking,
+        refetchSeatBookings: fetchSeatBookings,
         foodItems,
         loadingFood,
         cart,

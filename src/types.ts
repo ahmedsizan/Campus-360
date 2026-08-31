@@ -32,6 +32,7 @@ export interface Notice {
 }
 
 export type BusStatus = 'active' | 'inactive' | 'delayed';
+export type BusDirection = 'to_campus' | 'from_campus';
 
 export interface Bus {
   id: string;
@@ -41,8 +42,26 @@ export interface Bus {
   current_location: string;
   eta: string;
   schedule: string[];
+  total_seats?: number;
   created_at?: string;
 }
+
+export interface BusSeatBooking {
+  id: string;
+  bus_id: string;
+  bus_name: string;
+  direction: BusDirection;
+  trip_slot: string; // e.g. '07:30 AM' or '04:45 PM (Bus 1)'
+  stoppage: string; // e.g. 'Uttara BNS Center'
+  stoppage_time: string; // e.g. '07:40 AM'
+  seat_number: number; // 1 to 45
+  student_name: string;
+  student_id: string;
+  user_email: string;
+  booking_date: string; // YYYY-MM-DD
+  created_at?: string;
+}
+
 
 export type FoodCategory = 'breakfast' | 'lunch' | 'snacks' | 'beverage';
 

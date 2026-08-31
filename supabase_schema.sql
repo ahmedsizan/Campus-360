@@ -96,12 +96,40 @@ CREATE TABLE IF NOT EXISTS public.buses (
   current_location TEXT NOT NULL,
   eta TEXT NOT NULL,
   schedule TEXT[] DEFAULT '{}',
+  total_seats INTEGER DEFAULT 45,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 ALTER TABLE public.buses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Buses are readable by all" ON public.buses FOR SELECT USING (true);
 CREATE POLICY "Buses can be modified by authenticated" ON public.buses FOR ALL USING (true);
+
+
+-- 3.5 Bus Seat Bookings Table (45 Seats per Bus)
+CREATE TABLE IF NOT EXISTS public.bus_seat_bookings (
+  id TEXT PRIMARY KEY,
+  bus_id TEXT NOT NULL,
+  bus_name TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('to_campus', 'from_campus')),
+  trip_slot TEXT NOT NULL,
+  stoppage TEXT NOT NULL,
+  stoppage_time TEXT NOT NULL,
+  seat_number INTEGER NOT NULL CHECK (seat_number >= 1 AND seat_number <= 45),
+  student_name TEXT NOT NULL,
+  student_id TEXT NOT NULL,
+  user_email TEXT NOT NULL,
+  booking_date TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  CONSTRAINT unique_seat_reservation UNIQUE (bus_id, trip_slot, direction, seat_number, booking_date)
+);
+
+ALTER TABLE public.bus_seat_bookings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Seat bookings are readable by all" ON public.bus_seat_bookings FOR SELECT USING (true);
+CREATE POLICY "Seat bookings can be inserted by authenticated" ON public.bus_seat_bookings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Seat bookings can be deleted by authenticated" ON public.bus_seat_bookings FOR DELETE USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_seat_bookings_bus_slot ON public.bus_seat_bookings(bus_id, trip_slot, booking_date);
+
 
 
 -- 4. Food Items Table
@@ -196,13 +224,27 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Buses
-INSERT INTO public.buses (id, name, route, status, current_location, eta, schedule)
+INSERT INTO public.buses (id, name, route, status, current_location, eta, schedule, total_seats)
 VALUES 
-  ('bus-1', 'Green Express 01', 'Mirpur 10 ➔ Kazipara ➔ Agargaon ➔ Purbachal Campus', 'active', 'Approaching Kazipara Metro Station', '12 mins', ARRAY['07:30 AM', '09:00 AM', '01:30 PM', '04:30 PM']),
-  ('bus-2', 'Green Express 02', 'Uttara Sector 7 ➔ Airport ➔ Kuril ➔ Purbachal Campus', 'active', 'Passing Kuril Flyover Toll Plaza', '8 mins', ARRAY['07:45 AM', '09:15 AM', '02:00 PM', '05:00 PM']),
-  ('bus-3', 'Green Express 03', 'Mirpur 14 ➔ Kachukhet ➔ Banani ➔ Purbachal Campus', 'delayed', 'Stuck at Banani Signal (Heavy Traffic)', '25 mins', ARRAY['08:00 AM', '10:00 AM', '02:30 PM', '05:30 PM']),
-  ('bus-4', 'Green Express 04', 'Savar ➔ Hemayetpur ➔ Gabtoli ➔ Purbachal Campus', 'inactive', 'Campus Workshop — Scheduled Maintenance', 'Departs 04:30 PM', ARRAY['07:00 AM', '01:00 PM', '04:30 PM'])
+  ('bus-1', 'Green Line 1 (Mirpur Route)', 'Mirpur ➔ Kuril Flyover ➔ Purbachal Campus', 'active', 'Approaching Kuril Flyover (2 Buses Operating)', '10 mins', ARRAY['07:30 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'], 45),
+  ('bus-2', 'Green Line 2 (Uttara Route)', 'Uttara House Building ➔ BNS Center ➔ Kuril Flyover ➔ Purbachal Campus', 'active', 'Approaching Kuril Flyover (3 Buses Operating)', '8 mins', ARRAY['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'], 45),
+  ('bus-3', 'Green Line 3 (Bishnandi Ferry Ghat Route)', 'Bishnandi Ferry Ghat ➔ Araihazar ➔ Gawsia ➔ Purbachal Campus', 'active', 'Passing Araihazar (3 Buses Operating)', '10 mins', ARRAY['07:30 AM (Bus 1)', '09:30 AM (Bus 2)', '12:00 PM (Bus 3)', '01:45 PM (Return)', '04:45 PM (Dual Return)'], 45),
+  ('bus-4', 'Green Line 4 (Savar Route)', 'Savar ➔ Kuril Flyover ➔ Purbachal Campus', 'active', 'Approaching Kuril Flyover (2 Buses Operating)', '15 mins', ARRAY['07:00 AM (Bus 1)', '12:00 PM (Bus 2)', '01:45 PM (Return)', '04:45 PM (Return)'], 45)
 ON CONFLICT (id) DO NOTHING;
+
+
+
+
+
+-- Seed Bus Seat Bookings
+INSERT INTO public.bus_seat_bookings (id, bus_id, bus_name, direction, trip_slot, stoppage, stoppage_time, seat_number, student_name, student_id, user_email, booking_date)
+VALUES 
+  ('bk-101', 'bus-gl2-1', 'Green Line 2 (Bus 01)', 'to_campus', '07:30 AM', 'Uttara House Building', '07:30 AM', 4, 'Tanvir Ahmed', '22100234', 'tanvir@green.edu.bd', '2026-05-12'),
+  ('bk-102', 'bus-gl2-1', 'Green Line 2 (Bus 01)', 'to_campus', '07:30 AM', 'Uttara BNS Center', '07:40 AM', 7, 'Nafisa Islam', '22100589', 'nafisa@green.edu.bd', '2026-05-12'),
+  ('bk-103', 'bus-gl2-1', 'Green Line 2 (Bus 01)', 'to_campus', '07:30 AM', 'Kuril Flyover', '08:00 AM', 12, 'Shakib Rahman', '22100112', 'shakib@green.edu.bd', '2026-05-12'),
+  ('bk-104', 'bus-gl2-2', 'Green Line 2 (Bus 02)', 'to_campus', '09:30 AM', 'Uttara House Building', '09:30 AM', 3, 'Sadia Jahan', '22100876', 'sadia@green.edu.bd', '2026-05-12')
+ON CONFLICT (id) DO NOTHING;
+
 
 -- Seed Food Items
 INSERT INTO public.food_items (id, name, category, price, is_vegetarian, is_available, image, rating)
