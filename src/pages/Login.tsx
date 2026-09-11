@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
+import { supabase } from '../lib/supabaseClient';
 import { 
   GraduationCap, 
   Mail, 
@@ -36,6 +37,75 @@ export const Login: React.FC = () => {
   const [department, setDepartment] = useState('Computer Science & Engineering');
   const [idNo, setIdNo] = useState('');
 
+  // Live duplicate checking state
+  const [checkingId, setCheckingId] = useState(false);
+  const [remoteIdTaken, setRemoteIdTaken] = useState(false);
+  const [remoteOwnerName, setRemoteOwnerName] = useState('');
+
+  const isIdTaken = (id: string) => {
+    if (!id) return false;
+    const clean = id.trim().toLowerCase();
+    const demoIds = ['221002001', 'fac-cse-104', 'adm-gub-001', 'gub-staff-042'];
+    if (demoIds.includes(clean)) return true;
+    try {
+      const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as { id_no?: string }[];
+      if (localRegistered.some(u => u.id_no && u.id_no.toLowerCase() === clean)) return true;
+    } catch {}
+    try {
+      const cur = JSON.parse(localStorage.getItem('gub_user') || '{}') as { id_no?: string };
+      if (cur?.id_no && cur.id_no.toLowerCase() === clean) return true;
+    } catch {}
+    return false;
+  };
+
+  // Live check against local storage and Supabase cloud database as user types ID
+  useEffect(() => {
+    const clean = idNo.trim();
+    if (!clean || (role === 'student' && clean.length !== 9)) {
+      setRemoteIdTaken(false);
+      setRemoteOwnerName('');
+      return;
+    }
+
+    // Check local immediately
+    if (isIdTaken(clean)) {
+      setRemoteIdTaken(true);
+      setRemoteOwnerName('Registered Locally / Demo Account');
+      return;
+    }
+
+    let active = true;
+    const timer = setTimeout(async () => {
+      setCheckingId(true);
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, id_no, name, email')
+          .ilike('id_no', clean)
+          .limit(1);
+
+        if (active) {
+          if (data && data.length > 0) {
+            setRemoteIdTaken(true);
+            setRemoteOwnerName(data[0].name || data[0].email || 'in Database');
+          } else {
+            setRemoteIdTaken(false);
+            setRemoteOwnerName('');
+          }
+        }
+      } catch (err) {
+        // silent
+      } finally {
+        if (active) setCheckingId(false);
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [idNo, role]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -48,9 +118,10 @@ export const Login: React.FC = () => {
         addToast('success', 'Signed in successfully.', 'Welcome');
       }
     } else {
+      const cleanId = idNo.trim();
+
       // Validate Student Registration Rules (Strictly 9-digit ID and exact [ID]@student.green.ac.bd match)
       if (role === 'student') {
-        const cleanId = idNo.trim();
         if (cleanId.length !== 9 || !/^\d{9}$/.test(cleanId)) {
           setLoading(false);
           addToast(
@@ -74,6 +145,40 @@ export const Login: React.FC = () => {
         }
       }
 
+      // Check if ID is already registered locally or remotely
+      if (isIdTaken(cleanId) || remoteIdTaken) {
+        setLoading(false);
+        addToast(
+          'error',
+          `University ID "${cleanId}" is already registered (${remoteOwnerName || 'Existing User'}). Each ID can only have one unique account. Please Sign In instead.`,
+          'ID Already Registered'
+        );
+        return;
+      }
+
+      // Final live pre-check against Supabase profiles table right before registration
+      try {
+        const { data: dbMatches } = await supabase
+          .from('profiles')
+          .select('id, id_no, name, email')
+          .ilike('id_no', cleanId)
+          .limit(1);
+
+        if (dbMatches && dbMatches.length > 0) {
+          setLoading(false);
+          setRemoteIdTaken(true);
+          setRemoteOwnerName(dbMatches[0].name || dbMatches[0].email || 'in Database');
+          addToast(
+            'error',
+            `University ID "${cleanId}" is already registered (${dbMatches[0].name || dbMatches[0].email}). Duplicate accounts with the same ID are strictly prohibited. Please switch to Sign In.`,
+            'ID Already Registered'
+          );
+          return;
+        }
+      } catch (err) {
+        console.warn('DB uniqueness check error:', err);
+      }
+
       const finalDept = role === 'conductor' ? 'Transport & Fleet Division' : department;
       const { error } = await signUp(email, password, name, role, finalDept, idNo);
       if (error) {
@@ -94,6 +199,7 @@ export const Login: React.FC = () => {
   };
 
   const isStudentEmailMatched = role === 'student' && idNo.trim().length === 9 && email.trim().toLowerCase() === `${idNo.trim()}@student.green.ac.bd`;
+  const isCurrentIdDuplicate = isIdTaken(idNo) || remoteIdTaken;
 
   return (
     <div className="login-page-container" style={{
@@ -335,7 +441,9 @@ export const Login: React.FC = () => {
                   }}
                   style={{
                     ...inputStyle,
-                    borderColor: role === 'student' && idNo.length > 0 && idNo.length !== 9 
+                    borderColor: isCurrentIdDuplicate
+                      ? '#ef4444'
+                      : role === 'student' && idNo.length > 0 && idNo.length !== 9 
                       ? '#f59e0b' 
                       : role === 'student' && idNo.length === 9 
                       ? '#10b981' 
@@ -345,7 +453,27 @@ export const Login: React.FC = () => {
                 />
                 {role === 'student' && (
                   <div style={{ marginTop: '0.35rem' }}>
-                    {idNo.length === 0 ? (
+                    {isCurrentIdDuplicate ? (
+                      <div style={{ 
+                        fontSize: '0.78rem', 
+                        color: '#ef4444', 
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '6px',
+                        padding: '6px 10px',
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        fontWeight: 600 
+                      }}>
+                        <AlertCircle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
+                        <span>University ID ({idNo}) is already registered! You cannot create multiple accounts with the same ID. Please switch to Sign In.</span>
+                      </div>
+                    ) : checkingId ? (
+                      <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span>Checking ID uniqueness...</span>
+                      </div>
+                    ) : idNo.length === 0 ? (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         * University ID must be exactly 9 numeric digits (e.g. <code>232002038</code>).
                       </div>
@@ -357,7 +485,7 @@ export const Login: React.FC = () => {
                     ) : (
                       <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                         <CheckCircle2 size={13} color="#10b981" />
-                        <span>Valid 9-digit Student ID ({idNo}) — Email: <code>{idNo}@student.green.ac.bd</code></span>
+                        <span>Valid 9-digit Student ID ({idNo}) is available — Email: <code>{idNo}@student.green.ac.bd</code></span>
                       </div>
                     )}
                   </div>
@@ -521,11 +649,20 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               className="btn btn-primary login-submit-btn"
-              style={{ width: '100%', padding: '0.85rem' }}
-              disabled={loading}
+              style={{ 
+                width: '100%', 
+                padding: '0.85rem',
+                opacity: (mode === 'register' && isCurrentIdDuplicate) ? 0.65 : 1,
+                cursor: (mode === 'register' && isCurrentIdDuplicate) ? 'not-allowed' : 'pointer'
+              }}
+              disabled={loading || (mode === 'register' && isCurrentIdDuplicate)}
             >
-              {loading ? 'Please wait...' : mode === 'login' ? (
+              {loading ? (
+                'Please wait...'
+              ) : mode === 'login' ? (
                 <>Sign In <ArrowRight size={18} /></>
+              ) : isCurrentIdDuplicate ? (
+                <>ID Already Registered — Switch to Sign In</>
               ) : (
                 <>Create Account <CheckCircle2 size={18} /></>
               )}

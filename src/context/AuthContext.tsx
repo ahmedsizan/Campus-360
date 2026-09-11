@@ -182,6 +182,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch {}
         }
 
+        // 1.1 Check in persistent registered accounts registry
+        try {
+          const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
+          const matched = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean);
+          if (matched) {
+            matched.avatar = getResolvedAvatar(emailClean, matched.avatar);
+            setProfile(matched);
+            setUser({ id: matched.id, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
+            localStorage.setItem('gub_user', JSON.stringify(matched));
+            return { error: null };
+          }
+        } catch {}
+
         // 2. Fallback for Student Demo Login
         if (emailClean.includes('student') || emailClean === 'student@green.edu.bd') {
           const studentProf: UserProfile = {
@@ -314,7 +327,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Direct Supabase Auth Sign Up with Unique Student / University ID Check
+  // Direct Supabase Auth Sign Up with Strict Unique Student / University ID Check
   const signUp = async (
     email: string,
     password: string,
@@ -344,24 +357,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const finalDepartment = role === 'conductor' ? 'Transport & Fleet Division' : department;
 
-      // 1. Check if University ID Number is already registered in Supabase
+      // 1. Check local registered accounts and demo IDs to prevent duplicate accounts
+      const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
+      const savedUserStr = localStorage.getItem('gub_user');
+      if (savedUserStr) {
+        try {
+          const p = JSON.parse(savedUserStr) as UserProfile;
+          if (p && p.id_no && !localRegistered.some(u => u.id_no?.toLowerCase() === p.id_no?.toLowerCase())) {
+            localRegistered.push(p);
+          }
+        } catch {}
+      }
+
+      const demoAccounts = [
+        { id_no: '221002001', email: 'student@green.edu.bd', name: 'Ahmed Sizan (Student Demo)' },
+        { id_no: 'FAC-CSE-104', email: 'teacher@green.edu.bd', name: 'Dr. Mohammad Nazmul Islam (Faculty Demo)' },
+        { id_no: 'ADM-GUB-001', email: 'admin@green.edu.bd', name: 'System Administrator (Admin Demo)' },
+        { id_no: 'GUB-STAFF-042', email: 'conductor@green.edu.bd', name: 'Md. Rafiqul Islam (Conductor Demo)' }
+      ];
+
+      // Block duplicate ID Number locally
+      const existingById = localRegistered.find(u => u.id_no && u.id_no.toLowerCase() === idNoClean.toLowerCase())
+        || demoAccounts.find(d => d.id_no.toLowerCase() === idNoClean.toLowerCase());
+
+      if (existingById) {
+        return { 
+          error: new Error(`University ID "${idNoClean}" is already registered (${existingById.name || existingById.email}). You cannot create multiple accounts with the same ID. Please Sign In.`) 
+        };
+      }
+
+      // Block duplicate Email Address locally
+      const existingByEmail = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean)
+        || demoAccounts.find(d => d.email.toLowerCase() === emailClean);
+
+      if (existingByEmail) {
+        return { 
+          error: new Error(`An account with email "${emailClean}" is already registered. Please Sign In instead.`) 
+        };
+      }
+
+      // 2. Query Supabase profiles table using limit(1) to check if ID is already registered in cloud database
       try {
-        const { data: existingWithId } = await supabase
+        const { data: dbExistingId } = await supabase
           .from('profiles')
           .select('id, email, id_no, name')
           .ilike('id_no', idNoClean)
-          .maybeSingle();
+          .limit(1);
 
-        if (existingWithId && existingWithId.email !== emailClean) {
+        if (dbExistingId && dbExistingId.length > 0) {
           return { 
-            error: new Error(`ID Number "${idNoClean}" is already registered. Each ID can only register one unique account.`) 
+            error: new Error(`University ID "${idNoClean}" is already registered (${dbExistingId[0].name || dbExistingId[0].email}). Each ID can only register one account. Please Sign In.`) 
+          };
+        }
+
+        const { data: dbExistingEmail } = await supabase
+          .from('profiles')
+          .select('id, email, id_no, name')
+          .ilike('email', emailClean)
+          .limit(1);
+
+        if (dbExistingEmail && dbExistingEmail.length > 0) {
+          return { 
+            error: new Error(`Email "${emailClean}" is already registered. Please Sign In instead.`) 
           };
         }
       } catch (err) {
-        console.warn('ID uniqueness pre-check notice:', err);
+        console.warn('ID uniqueness cloud pre-check notice:', err);
       }
 
-      // 2. Register user with Supabase Auth
+      // 3. Register user with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: emailClean,
         password,
@@ -377,30 +441,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.warn('Supabase auth signUp fallback to local session:', error.message);
-        // Resilient fallback for immediate local account creation
-        const localUserId = `usr-${Date.now()}`;
-        const newProf: UserProfile = {
-          id: localUserId,
-          email: emailClean,
-          name,
-          role,
-          department: finalDepartment,
-          id_no: idNoClean,
-          semester: role === 'conductor' ? 'Staff' : 'Spring 2026',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-          bio: `${role === 'teacher' ? 'Faculty Member' : role === 'admin' ? 'Administrator' : role === 'conductor' ? 'Bus Conductor & Transit Staff' : 'Student'} at Green University of Bangladesh`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
+        const errMsg = error.message.toLowerCase();
+        // If Supabase reports user exists, database constraint violation, or duplicate key
+        if (
+          errMsg.includes('already') || 
+          errMsg.includes('exists') || 
+          errMsg.includes('duplicate') ||
+          errMsg.includes('unique') ||
+          errMsg.includes('database error') ||
+          errMsg.includes('violates') ||
+          errMsg.includes('constraint') ||
+          errMsg.includes('rate limit') ||
+          errMsg.includes('security purposes')
+        ) {
+          return {
+            error: new Error(`University ID "${idNoClean}" or Email "${emailClean}" is already registered. You cannot create multiple accounts with the same ID. Please Sign In.`)
+          };
+        }
 
-        setUser({ id: localUserId, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
-        setProfile(newProf);
-        localStorage.setItem('gub_user', JSON.stringify(newProf));
-        return { error: null };
+        // Return error directly - do NOT create a fake dummy user that masks duplicate ID accounts
+        return {
+          error: new Error(error.message || 'Registration failed. Please try again.')
+        };
       }
 
-      if (data.user) {
+      // Check if Supabase returned identities: [] (this is Supabase's signal that user already exists when email confirmation is enabled)
+      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        return {
+          error: new Error(`University ID "${idNoClean}" / Email "${emailClean}" is already registered. You cannot create multiple accounts with the same ID. Please Sign In.`)
+        };
+      }
+
+      if (data?.user) {
         setUser(data.user);
         const newProf: UserProfile = {
           id: data.user.id,
@@ -415,6 +487,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
+
+        // Record into local registered accounts registry
+        localRegistered.push(newProf);
+        localStorage.setItem('gub_registered_accounts', JSON.stringify(localRegistered));
 
         setProfile(newProf);
         localStorage.setItem('gub_user', JSON.stringify(newProf));
@@ -453,9 +529,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select('id, email, id_no')
           .ilike('id_no', idClean)
           .neq('id', profile.id)
-          .maybeSingle();
+          .limit(1);
 
-        if (existing) {
+        if (existing && existing.length > 0) {
           return {
             error: new Error(`University ID "${idClean}" is already in use by another account.`)
           };

@@ -1,5 +1,5 @@
 // Campus 360 Service Worker - Network First with Cache Fallback
-const CACHE_NAME = 'campus360-v2';
+const CACHE_NAME = 'campus360-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -31,6 +31,22 @@ self.addEventListener('fetch', (event) => {
     url.pathname.includes('node_modules') ||
     url.protocol.startsWith('chrome')
   ) {
+    return;
+  }
+
+  // Network-First for HTML/navigation so latest Vercel deployment loads immediately
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 
