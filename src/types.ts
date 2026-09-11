@@ -158,3 +158,5 @@ export type NavigationTab =
   | 'complaints'
   | 'profile'
   | 'settings';
+
+export type ThemeMode = 'dark' | 'light' | 'pink';

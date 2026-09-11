@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const Settings: React.FC = () => {
-  const { theme, toggleTheme, addToast, triggerInstallApp } = useApp();
+  const { theme, setTheme, addToast, triggerInstallApp } = useApp();
   const { profile } = useAuth();
 
   const [notifications, setNotifications] = useState({
@@ -46,12 +46,12 @@ export const Settings: React.FC = () => {
           <Palette size={20} color="var(--gub-green)" /> Interface Color Theme
         </h3>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-          Choose your preferred theme. Green University emerald aesthetic is preserved in both themes.
+          Choose your preferred theme. Green University emerald aesthetic is preserved across themes.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div
-            onClick={() => { if (theme !== 'dark') toggleTheme(); }}
+            onClick={() => setTheme('dark')}
             className="glass-card glass-card-interactive"
             style={{
               padding: '1.25rem',
@@ -70,14 +70,14 @@ export const Settings: React.FC = () => {
               </div>
               <div>
                 <div style={{ fontWeight: 700 }}>Dark Slate Theme</div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>High-contrast dark mode</div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>High-contrast night mode</div>
               </div>
             </div>
             {theme === 'dark' && <Check size={18} color="#10b981" />}
           </div>
 
           <div
-            onClick={() => { if (theme !== 'light') toggleTheme(); }}
+            onClick={() => setTheme('light')}
             className="glass-card glass-card-interactive"
             style={{
               padding: '1.25rem',
@@ -100,6 +100,32 @@ export const Settings: React.FC = () => {
               </div>
             </div>
             {theme === 'light' && <Check size={18} color="#10b981" />}
+          </div>
+
+          <div
+            onClick={() => setTheme('pink')}
+            className="glass-card glass-card-interactive"
+            style={{
+              padding: '1.25rem',
+              border: theme === 'pink' ? '2px solid var(--gub-green)' : '1px solid var(--border-subtle)',
+              background: '#fff0f5',
+              color: '#3b0720',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', background: 'rgba(236, 72, 153, 0.15)' }}>
+                <Sparkles size={20} color="#ec4899" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700 }}>Rose Pink Theme</div>
+                <div style={{ fontSize: '0.75rem', color: '#be185d' }}>Sakura blush glow</div>
+              </div>
+            </div>
+            {theme === 'pink' && <Check size={18} color="#ec4899" />}
           </div>
         </div>
       </div>

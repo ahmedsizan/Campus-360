@@ -12,13 +12,15 @@ import {
   NavigationTab, 
   Notice, 
   Order, 
-  ToastNotification 
+  ToastNotification,
+  ThemeMode 
 } from '../types';
 import { useAuth } from './AuthContext';
 
 interface AppContextType {
   // Theme
-  theme: 'dark' | 'light';
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
 
   // Active Tab
@@ -98,18 +100,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { profile } = useAuth();
 
   // Theme State
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+  const [theme, setTheme] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('gub_theme');
-    return saved === 'light' ? 'light' : 'dark';
+    if (saved === 'light' || saved === 'pink' || saved === 'dark') {
+      return saved as ThemeMode;
+    }
+    return 'dark';
   });
 
   useEffect(() => {
-    document.body.className = theme === 'light' ? 'light-theme' : 'dark-theme';
+    document.body.className = `${theme}-theme`;
     localStorage.setItem('gub_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme(prev => {
+      if (prev === 'dark') return 'light';
+      if (prev === 'light') return 'pink';
+      return 'dark';
+    });
   };
 
   // Active Tab
@@ -1006,6 +1015,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         theme,
+        setTheme,
         toggleTheme,
         activeTab,
         setActiveTab,

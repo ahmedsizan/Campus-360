@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   Download,
   MoreVertical,
-  Palette
+  Palette,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
@@ -184,9 +185,10 @@ export const Navbar: React.FC = () => {
               className="btn btn-secondary btn-icon desktop-only-control" 
               onClick={toggleTheme}
               aria-label="Toggle theme"
+              title={`Current theme: ${theme}. Click to switch.`}
               style={{ width: '36px', height: '36px', display: 'none' }}
             >
-              {theme === 'dark' ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="#6366f1" />}
+              {theme === 'dark' ? <Moon size={17} color="#38bdf8" /> : theme === 'light' ? <Sun size={17} color="#f59e0b" /> : <Sparkles size={17} color="#ec4899" />}
             </button>
 
             {/* Cart Trigger */}
@@ -350,11 +352,11 @@ export const Navbar: React.FC = () => {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        {theme === 'dark' ? <Moon size={16} color="#fbbf24" /> : <Sun size={16} color="#6366f1" />}
-                        <span>{theme === 'dark' ? 'Dark Theme (Night)' : 'Light Theme (Day)'}</span>
+                        {theme === 'dark' ? <Moon size={16} color="#38bdf8" /> : theme === 'light' ? <Sun size={16} color="#f59e0b" /> : <Sparkles size={16} color="#ec4899" />}
+                        <span>{theme === 'dark' ? 'Dark Theme (Night)' : theme === 'light' ? 'Light Theme (Day)' : 'Rose Pink Theme'}</span>
                       </div>
-                      <span className="badge badge-slate" style={{ fontSize: '0.7rem' }}>
-                        {theme === 'dark' ? 'ON' : 'OFF'}
+                      <span className="badge badge-slate" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                        {theme}
                       </span>
                     </button>
 

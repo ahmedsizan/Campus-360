@@ -86,6 +86,40 @@ body.light-theme {
   --bottom-nav-bg: rgba(255, 255, 255, 0.96);
 }
 
+/* Pink / Sakura Glow Theme */
+body.pink-theme {
+  color-scheme: light;
+  --bg-main: #fff0f5;
+  --bg-subtle: #fdf2f8;
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-card-hover: rgba(255, 245, 249, 0.98);
+  --bg-card-solid: #ffffff;
+  --bg-input: #ffffff;
+  --bg-input-focus: #fff7fa;
+  --border-subtle: rgba(244, 114, 182, 0.28);
+  --border-focus: rgba(236, 72, 153, 0.85);
+  --border-card: rgba(244, 114, 182, 0.22);
+  --text-primary: #3b0720;
+  --text-secondary: #831843;
+  --text-muted: #be185d;
+  --nav-bg: rgba(255, 240, 245, 0.96);
+  --shadow-card: 0 12px 36px -10px rgba(236, 72, 153, 0.16), 0 0 0 1px rgba(244, 114, 182, 0.14);
+  --shadow-glow: 0 0 25px rgba(236, 72, 153, 0.32);
+  --modal-bg: #fffbfd;
+  --badge-bg: rgba(244, 114, 182, 0.14);
+  --bottom-nav-bg: rgba(255, 240, 245, 0.97);
+  --gub-green: #ec4899;
+  --gub-green-dark: #db2777;
+  --gub-green-light: #f472b6;
+  --gub-green-glow: rgba(236, 72, 153, 0.35);
+}
+
+body.pink-theme {
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(244, 114, 182, 0.18) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+}
+
 /* Base Resets with iOS Touch Enhancements */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -293,14 +327,14 @@ button {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--gub-green) 0%, var(--gub-green-dark) 100%);
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 15px var(--gub-green-glow);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, var(--gub-green-light) 0%, var(--gub-green) 100%);
+  box-shadow: 0 6px 20px var(--gub-green-glow);
   transform: translateY(-1px);
 }
 
@@ -450,6 +484,74 @@ body.light-theme input:-webkit-autofill:active {
   -webkit-text-fill-color: #0f172a !important;
   caret-color: #0f172a !important;
   border-color: var(--gub-green) !important;
+}
+
+body.pink-theme input:-webkit-autofill,
+body.pink-theme input:-webkit-autofill:hover, 
+body.pink-theme input:-webkit-autofill:focus, 
+body.pink-theme input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #3b0720 !important;
+  caret-color: #ec4899 !important;
+  border-color: #ec4899 !important;
+}
+
+/* Theme Segmented Switcher Control */
+.theme-segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  gap: 3px;
+  user-select: none;
+}
+
+.theme-segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme-segmented-btn:hover {
+  color: var(--text-primary);
+  background: var(--badge-bg);
+}
+
+.theme-segmented-btn.active-dark {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+}
+
+.theme-segmented-btn.active-light {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #d97706;
+  box-shadow: 0 2px 14px rgba(245, 158, 11, 0.3);
+}
+
+.theme-segmented-btn.active-pink {
+  background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+  border-color: rgba(244, 63, 114, 0.6);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(236, 72, 153, 0.5);
 }
 
 .form-textarea {

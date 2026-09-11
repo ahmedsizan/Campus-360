@@ -14,13 +14,14 @@ import {
   CheckCircle2, 
   Sun, 
   Moon,
+  Sparkles,
   UserCheck
 } from 'lucide-react';
 import { UserRole } from '../types';
 
 export const Login: React.FC = () => {
   const { signIn, signUp } = useAuth();
-  const { addToast, theme, toggleTheme } = useApp();
+  const { addToast, theme, setTheme } = useApp();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -59,9 +60,9 @@ export const Login: React.FC = () => {
   };
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: theme === 'dark' ? '#151e32' : '#ffffff',
-    color: theme === 'dark' ? '#ffffff' : '#0f172a',
-    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: 'var(--bg-input)',
+    color: 'var(--text-primary)',
+    borderColor: 'var(--border-subtle)',
     fontWeight: 500
   };
 
@@ -75,16 +76,42 @@ export const Login: React.FC = () => {
       padding: '2rem 1rem',
       position: 'relative'
     }}>
-      {/* Theme Toggle Top-Right */}
-      <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
-        <button 
-          className="btn btn-secondary btn-icon" 
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-        >
-          {theme === 'dark' ? <Sun size={19} color="#fbbf24" /> : <Moon size={19} color="#6366f1" />}
-        </button>
+      {/* Theme Mode Segmented Switcher Top-Right (Night, Light, Pink) */}
+      <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
+        <div className="theme-segmented-control" role="group" aria-label="Campus 360 Theme Selector">
+          <button 
+            type="button"
+            className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
+            onClick={() => setTheme('dark')}
+            aria-label="Night Mode"
+            title="Night Mode (Dark Slate)"
+          >
+            <Moon size={15} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+            <span>Night</span>
+          </button>
+
+          <button 
+            type="button"
+            className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
+            onClick={() => setTheme('light')}
+            aria-label="Light Mode"
+            title="Light Mode (Clean Daylight)"
+          >
+            <Sun size={15} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+            <span>Light</span>
+          </button>
+
+          <button 
+            type="button"
+            className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
+            onClick={() => setTheme('pink')}
+            aria-label="Pink Mode"
+            title="Pink Mode (Sakura Rose Glow)"
+          >
+            <Sparkles size={15} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
+            <span>Pink</span>
+          </button>
+        </div>
       </div>
 
       {/* Centered Auth Card */}
@@ -92,8 +119,14 @@ export const Login: React.FC = () => {
         maxWidth: '460px',
         width: '100%',
         padding: '2.5rem',
-        boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.15)',
-        border: '1px solid rgba(16, 185, 129, 0.25)'
+        boxShadow: theme === 'dark'
+          ? '0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.15)'
+          : theme === 'pink'
+          ? '0 25px 60px -15px rgba(244, 63, 114, 0.18), 0 0 35px rgba(236, 72, 153, 0.26)'
+          : '0 25px 60px -15px rgba(0, 0, 0, 0.08), 0 0 30px rgba(16, 185, 129, 0.12)',
+        border: theme === 'pink'
+          ? '1.5px solid rgba(244, 114, 182, 0.35)'
+          : '1px solid var(--border-card)'
       }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -101,13 +134,17 @@ export const Login: React.FC = () => {
             width: '56px',
             height: '56px',
             borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            background: theme === 'pink'
+              ? 'linear-gradient(135deg, #f43f5e 0%, #ec4899 100%)'
+              : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
             margin: '0 auto 1rem',
-            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)'
+            boxShadow: theme === 'pink'
+              ? '0 8px 24px rgba(236, 72, 153, 0.45)'
+              : '0 8px 24px rgba(16, 185, 129, 0.4)'
           }}>
             <GraduationCap size={32} />
           </div>
@@ -122,7 +159,7 @@ export const Login: React.FC = () => {
         {/* Tab Switcher */}
         <div style={{
           display: 'flex',
-          background: theme === 'dark' ? '#0f172a' : '#e2e8f0',
+          background: theme === 'dark' ? '#0f172a' : theme === 'pink' ? 'rgba(236, 72, 153, 0.12)' : '#e2e8f0',
           borderRadius: 'var(--radius-md)',
           padding: '4px',
           marginBottom: '1.75rem',
