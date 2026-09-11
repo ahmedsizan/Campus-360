@@ -20,11 +20,13 @@ import {
   Download,
   MoreVertical,
   Palette,
-  Sparkles
+  Sparkles,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { NavigationTab } from '../types';
+import { translations } from '../translations';
 
 export const Navbar: React.FC = () => {
   const { profile, signOut } = useAuth();
@@ -32,6 +34,8 @@ export const Navbar: React.FC = () => {
     theme, 
     setTheme,
     toggleTheme, 
+    language,
+    setLanguage,
     activeTab, 
     setActiveTab, 
     cartCount, 
@@ -40,15 +44,16 @@ export const Navbar: React.FC = () => {
     triggerInstallApp
   } = useApp();
 
+  const t = translations[language];
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
   const navItems: { id: NavigationTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { id: 'notices', label: 'Notices', icon: <Bell size={18} /> },
-    { id: 'cafeteria', label: 'Cafeteria', icon: <Utensils size={18} /> },
-    { id: 'transport', label: 'Transport', icon: <Bus size={18} /> },
-    { id: 'lostfound', label: 'Lost & Found', icon: <Search size={18} /> },
-    { id: 'complaints', label: 'Complaints', icon: <AlertCircle size={18} /> },
+    { id: 'dashboard', label: t.navDashboard, icon: <LayoutDashboard size={18} /> },
+    { id: 'notices', label: t.navNotices, icon: <Bell size={18} /> },
+    { id: 'cafeteria', label: t.navCafeteria, icon: <Utensils size={18} /> },
+    { id: 'transport', label: t.navTransport, icon: <Bus size={18} /> },
+    { id: 'lostfound', label: t.navLostFound, icon: <Search size={18} /> },
+    { id: 'complaints', label: t.navComplaints, icon: <AlertCircle size={18} /> },
   ];
 
   const handleNavClick = (tab: NavigationTab) => {
@@ -58,15 +63,15 @@ export const Navbar: React.FC = () => {
 
   const getRoleBadge = () => {
     if (profile?.role === 'admin') {
-      return <span className="badge badge-purple" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}><ShieldCheck size={10} /> Admin</span>;
+      return <span className="badge badge-purple" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}><ShieldCheck size={10} /> {t.roleAdminShort}</span>;
     }
     if (profile?.role === 'teacher') {
-      return <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>Faculty</span>;
+      return <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>{t.roleTeacherShort}</span>;
     }
     if (profile?.role === 'conductor') {
-      return <span className="badge badge-amber" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}><Bus size={10} /> Conductor</span>;
+      return <span className="badge badge-amber" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}><Bus size={10} /> {t.roleConductorShort}</span>;
     }
-    return <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>Student</span>;
+    return <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>{t.roleStudentShort}</span>;
   };
 
   return (
@@ -182,39 +187,62 @@ export const Navbar: React.FC = () => {
               <span>Install App</span>
             </button>
 
+            {/* Language Switcher (বাংলা | English) */}
+            <div className="lang-segmented-control navbar-lang-control" role="group" aria-label="Language Selector">
+              <button
+                type="button"
+                className={`lang-segmented-btn navbar-lang-btn ${language === 'bn' ? 'active' : ''}`}
+                onClick={() => setLanguage('bn')}
+                title="বাংলা"
+                aria-label="বাংলা ভাষা"
+              >
+                <Globe size={13} />
+                <span>বাংলা</span>
+              </button>
+              <button
+                type="button"
+                className={`lang-segmented-btn navbar-lang-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+                title="English"
+                aria-label="English Language"
+              >
+                <span>English</span>
+              </button>
+            </div>
+
             {/* Theme Selector (Night / Light / Pink) */}
             <div className="theme-segmented-control navbar-theme-control" role="group" aria-label="Appearance Theme Selector">
               <button
                 type="button"
                 className={`theme-segmented-btn navbar-theme-btn ${theme === 'dark' ? 'active-dark' : ''}`}
                 onClick={() => setTheme('dark')}
-                title="Night Mode (Dark Slate)"
+                title={language === 'bn' ? 'নাইট মোড' : 'Night Mode (Dark Slate)'}
                 aria-label="Night Mode"
               >
                 <Moon size={13} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
-                <span className="navbar-theme-label">Night</span>
+                <span className="navbar-theme-label">{t.dashThemeNight}</span>
               </button>
 
               <button
                 type="button"
                 className={`theme-segmented-btn navbar-theme-btn ${theme === 'light' ? 'active-light' : ''}`}
                 onClick={() => setTheme('light')}
-                title="Light Mode (Clean Daylight)"
+                title={language === 'bn' ? 'লাইট মোড' : 'Light Mode (Clean Daylight)'}
                 aria-label="Light Mode"
               >
                 <Sun size={13} color={theme === 'light' ? '#d97706' : 'currentColor'} />
-                <span className="navbar-theme-label">Light</span>
+                <span className="navbar-theme-label">{t.dashThemeLight}</span>
               </button>
 
               <button
                 type="button"
                 className={`theme-segmented-btn navbar-theme-btn ${theme === 'pink' ? 'active-pink' : ''}`}
                 onClick={() => setTheme('pink')}
-                title="Pink Mode (Sakura Rose Glow)"
+                title={language === 'bn' ? 'গোলাপী মোড' : 'Pink Mode (Sakura Rose Glow)'}
                 aria-label="Pink Mode"
               >
                 <Sparkles size={13} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
-                <span className="navbar-theme-label">Pink</span>
+                <span className="navbar-theme-label">{t.dashThemePink}</span>
               </button>
             </div>
 
@@ -359,10 +387,61 @@ export const Navbar: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Language Selector Inside Dropdown */}
+                    <div style={{ padding: '0.5rem 0.65rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', marginBottom: '0.35rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>{language === 'bn' ? 'ভাষা নির্বাচন' : 'Language'}</span>
+                        <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>{language === 'bn' ? 'বাংলা' : 'English'}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => { setLanguage('bn'); setIsUserDropdownOpen(false); }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            padding: '0.4rem 0.2rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: language === 'bn' ? '1.5px solid var(--gub-green)' : '1px solid var(--border-subtle)',
+                            background: language === 'bn' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                            color: language === 'bn' ? 'var(--gub-green)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.76rem',
+                            fontWeight: 700
+                          }}
+                        >
+                          <Globe size={13} />
+                          <span>বাংলা</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setLanguage('en'); setIsUserDropdownOpen(false); }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            padding: '0.4rem 0.2rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: language === 'en' ? '1.5px solid var(--gub-green)' : '1px solid var(--border-subtle)',
+                            background: language === 'en' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                            color: language === 'en' ? 'var(--gub-green)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.76rem',
+                            fontWeight: 700
+                          }}
+                        >
+                          <span>English</span>
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Theme Mode Selector Inside Dropdown */}
                     <div style={{ padding: '0.5rem 0.65rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span>Appearance Theme</span>
+                        <span>{language === 'bn' ? 'থিম বা রং' : 'Appearance Theme'}</span>
                         <span className="badge badge-slate" style={{ fontSize: '0.68rem', textTransform: 'capitalize' }}>{theme}</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
@@ -386,7 +465,7 @@ export const Navbar: React.FC = () => {
                           title="Night Mode"
                         >
                           <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
-                          <span>Night</span>
+                          <span>{t.dashThemeNight}</span>
                         </button>
                         <button
                           type="button"
@@ -408,7 +487,7 @@ export const Navbar: React.FC = () => {
                           title="Light Mode"
                         >
                           <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
-                          <span>Light</span>
+                          <span>{t.dashThemeLight}</span>
                         </button>
                         <button
                           type="button"
@@ -430,7 +509,7 @@ export const Navbar: React.FC = () => {
                           title="Pink Mode"
                         >
                           <Sparkles size={14} color={theme === 'pink' ? '#ec4899' : 'currentColor'} />
-                          <span>Pink</span>
+                          <span>{t.dashThemePink}</span>
                         </button>
                       </div>
                     </div>
@@ -444,7 +523,7 @@ export const Navbar: React.FC = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-green-light)', fontWeight: 600, textAlign: 'left', width: '100%' }}
                       className="btn-secondary"
                     >
-                      <Download size={16} color="var(--gub-green)" /> Install Mobile App
+                      <Download size={16} color="var(--gub-green)" /> {t.navInstallApp}
                     </button>
 
                     <button
@@ -455,7 +534,7 @@ export const Navbar: React.FC = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--text-primary)', textAlign: 'left', width: '100%' }}
                       className="btn-secondary"
                     >
-                      <User size={16} /> My Full Profile
+                      <User size={16} /> {t.navMyProfile}
                     </button>
 
                     <button
@@ -466,7 +545,7 @@ export const Navbar: React.FC = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--text-primary)', textAlign: 'left', width: '100%' }}
                       className="btn-secondary"
                     >
-                      <Settings size={16} /> Edit Info & Photo
+                      <Settings size={16} /> {language === 'bn' ? 'তথ্য ও ছবি পরিবর্তন' : 'Edit Info & Photo'}
                     </button>
 
                     <button
@@ -477,7 +556,7 @@ export const Navbar: React.FC = () => {
                       style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--text-primary)', textAlign: 'left', width: '100%' }}
                       className="btn-secondary"
                     >
-                      <Palette size={16} /> App Preferences
+                      <Palette size={16} /> {t.navSettings}
                     </button>
 
                     <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '0.35rem', paddingTop: '0.35rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -488,7 +567,7 @@ export const Navbar: React.FC = () => {
                         }}
                         style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-green-light)', textAlign: 'left', width: '100%', fontWeight: 700 }}
                       >
-                        <LogIn size={16} color="var(--gub-green)" /> Log In / Switch Account
+                        <LogIn size={16} color="var(--gub-green)" /> {language === 'bn' ? 'লগ ইন / অ্যাকাউন্ট পরিবর্তন' : 'Log In / Switch Account'}
                       </button>
                       <button
                         onClick={() => {
@@ -497,7 +576,7 @@ export const Navbar: React.FC = () => {
                         }}
                         style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', color: 'var(--gub-rose)', textAlign: 'left', width: '100%', fontWeight: 600 }}
                       >
-                        <LogOut size={16} /> Sign Out
+                        <LogOut size={16} /> {t.navSignOut}
                       </button>
                     </div>
                   </div>
@@ -526,7 +605,7 @@ export const Navbar: React.FC = () => {
           className={`mobile-bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
         >
           <LayoutDashboard size={19} />
-          <span>Home</span>
+          <span>{language === 'bn' ? 'হোম' : 'Home'}</span>
         </button>
 
         <button
@@ -534,7 +613,7 @@ export const Navbar: React.FC = () => {
           className={`mobile-bottom-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
         >
           <Bell size={19} />
-          <span>Notices</span>
+          <span>{t.navNotices}</span>
         </button>
 
         <button
@@ -542,7 +621,7 @@ export const Navbar: React.FC = () => {
           className={`mobile-bottom-nav-item ${activeTab === 'cafeteria' ? 'active' : ''}`}
         >
           <Utensils size={19} />
-          <span>Food</span>
+          <span>{language === 'bn' ? 'খাবার' : 'Food'}</span>
         </button>
 
         <button
@@ -550,7 +629,7 @@ export const Navbar: React.FC = () => {
           className={`mobile-bottom-nav-item ${activeTab === 'transport' ? 'active' : ''}`}
         >
           <Bus size={19} />
-          <span>Bus</span>
+          <span>{language === 'bn' ? 'বাস' : 'Bus'}</span>
         </button>
 
         <button
@@ -558,7 +637,7 @@ export const Navbar: React.FC = () => {
           className={`mobile-bottom-nav-item ${activeTab === 'complaints' ? 'active' : ''}`}
         >
           <AlertCircle size={19} />
-          <span>Feedback</span>
+          <span>{language === 'bn' ? 'মতামত' : 'Feedback'}</span>
         </button>
       </div>
     </>

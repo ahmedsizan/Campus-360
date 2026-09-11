@@ -576,6 +576,97 @@ body.pink-theme input:-webkit-autofill:active {
   }
 }
 
+/* Language Segmented Switcher Control */
+.lang-segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  gap: 3px;
+  user-select: none;
+}
+
+.lang-segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lang-segmented-btn:hover {
+  color: var(--text-primary);
+  background: var(--badge-bg);
+}
+
+.lang-segmented-btn.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+}
+
+.navbar-lang-control {
+  padding: 3px !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.navbar-lang-btn {
+  padding: 0.28rem 0.6rem !important;
+  font-size: 0.78rem !important;
+  gap: 0.3rem !important;
+}
+
+/* Unified Single-Row Top Bar for Login Screen (Desktop & Mobile) */
+.login-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  padding-top: max(1.15rem, env(safe-area-inset-top, 0px));
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  z-index: 50;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.login-top-bar-left,
+.login-top-bar-right {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Dashboard Banner Single-Row Controls */
+.banner-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: nowrap;
+}
+
 .form-textarea {
   min-height: 100px;
   resize: vertical;
@@ -1457,14 +1548,69 @@ body.pink-theme input:-webkit-autofill:active {
     overflow-y: auto !important;
   }
 
-  .login-theme-switcher {
-    top: 0.85rem !important;
-    right: 0.85rem !important;
+  /* Unified Single Line Top Bar on Mobile (Strictly non-overlapping for iOS Safari & Android) */
+  .login-top-bar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    max-width: 460px !important;
+    padding: 0.45rem 0.25rem 0.75rem !important;
+    padding-top: max(0.45rem, env(safe-area-inset-top, 0px)) !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 0.4rem !important;
   }
 
-  .login-theme-switcher .theme-segmented-btn {
-    padding: 0.3rem 0.55rem !important;
-    font-size: 0.76rem !important;
+  .login-top-bar-left,
+  .login-top-bar-right {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .login-lang-control,
+  .dashboard-lang-control {
+    padding: 2.5px !important;
+    gap: 2px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .login-lang-control .lang-segmented-btn,
+  .dashboard-lang-control .lang-segmented-btn {
+    padding: 0.26rem 0.52rem !important;
+    font-size: 0.74rem !important;
+    gap: 0.25rem !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .login-theme-control,
+  .dashboard-theme-control {
+    padding: 2.5px !important;
+    gap: 2px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .login-theme-control .theme-segmented-btn,
+  .dashboard-theme-control .theme-segmented-btn {
+    padding: 0.26rem 0.46rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.25rem !important;
+  }
+
+  /* Single-row Dashboard Controls on Mobile Phones */
+  .banner-controls-group {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 0.4rem !important;
+    margin-bottom: 0.45rem !important;
   }
 
   .login-auth-card {
@@ -1565,5 +1711,47 @@ body.pink-theme input:-webkit-autofill:active {
     text-align: center !important;
   }
 }
+
+/* Ultra-compact phone screens (iPhone SE, smaller Android devices <= 400px) */
+@media (max-width: 400px) {
+  .login-top-bar {
+    padding: 0.35rem 0.15rem 0.65rem !important;
+    gap: 0.3rem !important;
+  }
+
+  /* Keep theme icons clean & minimal on compact screens so theme and language never wrap or touch */
+  .login-theme-control .theme-btn-text,
+  .dashboard-theme-control .theme-btn-text {
+    display: none !important;
+  }
+
+  .login-theme-control .theme-segmented-btn,
+  .dashboard-theme-control .theme-segmented-btn {
+    padding: 0.32rem 0.52rem !important;
+    gap: 0 !important;
+  }
+
+  .login-lang-control .lang-segmented-btn,
+  .dashboard-lang-control .lang-segmented-btn {
+    padding: 0.25rem 0.45rem !important;
+    font-size: 0.72rem !important;
+  }
+}
+
+/* Micro phone screens (<= 340px) */
+@media (max-width: 340px) {
+  .login-top-bar {
+    gap: 0.2rem !important;
+  }
+  .login-lang-control .lang-segmented-btn {
+    padding: 0.22rem 0.38rem !important;
+    font-size: 0.68rem !important;
+    gap: 2px !important;
+  }
+  .login-theme-control .theme-segmented-btn {
+    padding: 0.28rem 0.42rem !important;
+  }
+}
+
 
 

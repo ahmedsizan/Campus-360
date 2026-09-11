@@ -24,8 +24,10 @@ import {
   Users,
   Ticket,
   KeyRound,
-  Zap
+  Zap,
+  Globe
 } from 'lucide-react';
+import { translations } from '../../translations';
 
 export const ConductorDashboard: React.FC = () => {
   const { profile } = useAuth();
@@ -35,8 +37,12 @@ export const ConductorDashboard: React.FC = () => {
     updateSeatBookingStatus, 
     cancelSeatBooking,
     refetchSeatBookings,
-    addToast
+    addToast,
+    language,
+    setLanguage
   } = useApp();
+
+  const t = translations[language];
 
   const [selectedLineFilter, setSelectedLineFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'rejected'>('all');
@@ -131,19 +137,42 @@ export const ConductorDashboard: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Language Switcher (বাংলা | English) */}
+          <div className="lang-segmented-control dashboard-lang-control" role="group" aria-label="Language Selector">
+            <button 
+              type="button"
+              className={`lang-segmented-btn ${language === 'bn' ? 'active' : ''}`}
+              onClick={() => setLanguage('bn')}
+              aria-label="বাংলা ভাষা"
+              title="বাংলা ভাষা নির্বাচন করুন"
+            >
+              <Globe size={13} />
+              <span>বাংলা</span>
+            </button>
+            <button 
+              type="button"
+              className={`lang-segmented-btn ${language === 'en' ? 'active' : ''}`}
+              onClick={() => setLanguage('en')}
+              aria-label="English Language"
+              title="Switch to English"
+            >
+              <span>English</span>
+            </button>
+          </div>
+
           <button
             className="btn btn-secondary btn-sm"
             onClick={async () => {
               setIsSyncing(true);
               await refetchSeatBookings();
               setIsSyncing(false);
-              addToast('success', 'Live seating data synchronized with cloud database.', 'Data Refreshed');
+              addToast('success', language === 'bn' ? 'ডাটাবেজের সাথে লাইভ সিট তথ্য সিঙ্ক হয়েছে।' : 'Live seating data synchronized with cloud database.', language === 'bn' ? 'ডাটা সিঙ্ক' : 'Data Refreshed');
             }}
             disabled={isSyncing}
             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <RotateCcw size={14} className={isSyncing ? 'animate-spin' : ''} />
-            {isSyncing ? 'Syncing...' : 'Sync Cloud'}
+            {isSyncing ? t.dashSyncing : t.dashSyncCloud}
           </button>
 
           {pendingCount > 0 && (
@@ -152,7 +181,7 @@ export const ConductorDashboard: React.FC = () => {
               onClick={handleApproveAllPending}
               style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
             >
-              <CheckCheck size={16} /> Approve All Pending ({pendingCount})
+              <CheckCheck size={16} /> {t.dashApproveAllPending.replace('{count}', String(pendingCount))}
             </button>
           )}
         </div>

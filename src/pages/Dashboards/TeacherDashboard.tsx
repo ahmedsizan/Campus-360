@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import { translations } from '../../translations';
 import { 
   Users, 
   BookOpen, 
@@ -10,20 +11,22 @@ import {
   MapPin, 
   Bell, 
   FileText, 
-  ArrowRight,
-  Sparkles,
-  Moon,
-  Sun
+  ArrowRight, 
+  Sparkles, 
+  Moon, 
+  Sun,
+  Globe
 } from 'lucide-react';
 
 export const TeacherDashboard: React.FC = () => {
   const { profile } = useAuth();
-  const { notices, setActiveTab, theme, setTheme } = useApp();
+  const { notices, setActiveTab, theme, setTheme, language, setLanguage } = useApp();
+  const t = translations[language];
 
   const teacherSchedule = [
-    { code: 'CSE 411', title: 'Distributed Systems & Cloud Computing', section: 'Sec A (60 Students)', time: '08:30 AM - 10:00 AM', room: 'Building A, Room 402', status: 'Completed' },
-    { code: 'CSE 323', title: 'Operating Systems & Concurrency', section: 'Sec B (45 Students)', time: '11:30 AM - 01:00 PM', room: 'Software Lab 3, 5th Floor', status: 'Ongoing' },
-    { code: 'CSE 499', title: 'Senior Capstone Project Supervision', section: 'Team Alpha & Beta', time: '03:00 PM - 04:30 PM', room: 'Faculty Lounge Room 302', status: 'Upcoming' },
+    { code: 'CSE 411', title: 'Distributed Systems & Cloud Computing', section: 'Sec A (60 Students)', time: '08:30 AM - 10:00 AM', room: 'Building A, Room 402', status: language === 'bn' ? 'সম্পন্ন' : 'Completed' },
+    { code: 'CSE 323', title: 'Operating Systems & Concurrency', section: 'Sec B (45 Students)', time: '11:30 AM - 01:00 PM', room: 'Software Lab 3, 5th Floor', status: language === 'bn' ? 'চলমান' : 'Ongoing' },
+    { code: 'CSE 499', title: 'Senior Capstone Project Supervision', section: 'Team Alpha & Beta', time: '03:00 PM - 04:30 PM', room: 'Faculty Lounge Room 302', status: language === 'bn' ? 'আসন্ন' : 'Upcoming' },
   ];
 
   return (
@@ -49,54 +52,80 @@ export const TeacherDashboard: React.FC = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
               <span style={{ fontSize: '0.85rem', color: 'var(--gub-cyan)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Faculty Portal
+                {t.dashFacultyPortal}
               </span>
-              <span className="badge badge-cyan">Faculty ID: {profile?.id_no || 'FAC-8891'}</span>
+              <span className="badge badge-cyan">{t.dashFacultyId}: {profile?.id_no || 'FAC-8891'}</span>
             </div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Welcome, {profile?.name}</h2>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>{language === 'bn' ? `স্বাগতম, ${profile?.name}` : `Welcome, ${profile?.name}`}</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              {profile?.department} • Office Hours: {profile?.office_hours || 'Sun & Tue: 10:00 AM - 1:00 PM'}
+              {profile?.department} • {t.dashOfficeHours}: {profile?.office_hours || (language === 'bn' ? 'রবি ও মঙ্গল: সকাল ১০:০০ - দুপুর ১:০০' : 'Sun & Tue: 10:00 AM - 1:00 PM')}
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
-          {/* Theme Selector (Night / Light / Pink) */}
-          <div className="theme-segmented-control" role="group" aria-label="Appearance Theme Selector">
-            <button 
-              type="button"
-              className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
-              onClick={() => setTheme('dark')}
-              title="Night Mode (Dark Slate)"
-              aria-label="Night Mode"
-            >
-              <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
-              <span>Night</span>
-            </button>
-            <button 
-              type="button"
-              className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
-              onClick={() => setTheme('light')}
-              title="Light Mode (Clean Daylight)"
-              aria-label="Light Mode"
-            >
-              <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
-              <span>Light</span>
-            </button>
-            <button 
-              type="button"
-              className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
-              onClick={() => setTheme('pink')}
-              title="Pink Mode (Sakura Rose Glow)"
-              aria-label="Pink Mode"
-            >
-              <Sparkles size={14} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
-              <span>Pink</span>
-            </button>
+          {/* Dedicated Non-Overlapping Single-Row Controls for Language & Theme */}
+          <div className="banner-controls-group">
+            {/* Language Switcher (বাংলা | English) */}
+            <div className="lang-segmented-control dashboard-lang-control" role="group" aria-label="Language Selector">
+              <button 
+                type="button"
+                className={`lang-segmented-btn ${language === 'bn' ? 'active' : ''}`}
+                onClick={() => setLanguage('bn')}
+                aria-label="বাংলা ভাষা"
+                title="বাংলা ভাষা নির্বাচন করুন"
+              >
+                <Globe size={13} />
+                <span>বাংলা</span>
+              </button>
+              <button 
+                type="button"
+                className={`lang-segmented-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+                aria-label="English Language"
+                title="Switch to English"
+              >
+                <span>English</span>
+              </button>
+            </div>
+
+            {/* Theme Selector (Night / Light / Pink) */}
+            <div className="theme-segmented-control dashboard-theme-control" role="group" aria-label="Appearance Theme Selector">
+              <button 
+                type="button"
+                className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
+                onClick={() => setTheme('dark')}
+                title={language === 'bn' ? 'নাইট মোড' : 'Night Mode (Dark Slate)'}
+                aria-label="Night Mode"
+              >
+                <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+                <span className="theme-btn-text">{t.dashThemeNight}</span>
+              </button>
+              <button 
+                type="button"
+                className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
+                onClick={() => setTheme('light')}
+                title={language === 'bn' ? 'লাইট মোড' : 'Light Mode (Clean Daylight)'}
+                aria-label="Light Mode"
+              >
+                <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+                <span className="theme-btn-text">{t.dashThemeLight}</span>
+              </button>
+              <button 
+                type="button"
+                className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
+                onClick={() => setTheme('pink')}
+                title={language === 'bn' ? 'গোলাপী মোড' : 'Pink Mode (Sakura Rose Glow)'}
+                aria-label="Pink Mode"
+              >
+                <Sparkles size={14} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
+                <span className="theme-btn-text">{t.dashThemePink}</span>
+              </button>
+            </div>
           </div>
 
           <button className="btn btn-primary" onClick={() => setActiveTab('notices')}>
-            <Bell size={18} /> View Circulars
+            <Bell size={18} /> {language === 'bn' ? 'সার্কুলার ও নোটিশ' : 'View Circulars'}
           </button>
         </div>
       </div>

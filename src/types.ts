@@ -160,3 +160,4 @@ export type NavigationTab =
   | 'settings';
 
 export type ThemeMode = 'dark' | 'light' | 'pink';
+export type Language = 'bn' | 'en';

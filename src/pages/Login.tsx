@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabaseClient';
+import { translations } from '../translations';
 import { 
   GraduationCap, 
   Mail, 
@@ -17,13 +18,15 @@ import {
   Moon,
   Sparkles,
   AlertCircle,
-  UserCheck
+  UserCheck,
+  Globe
 } from 'lucide-react';
 import { UserRole } from '../types';
 
 export const Login: React.FC = () => {
   const { signIn, signUp } = useAuth();
-  const { addToast, theme, setTheme } = useApp();
+  const { addToast, theme, setTheme, language, setLanguage } = useApp();
+  const t = translations[language];
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +44,91 @@ export const Login: React.FC = () => {
   const [checkingId, setCheckingId] = useState(false);
   const [remoteIdTaken, setRemoteIdTaken] = useState(false);
   const [remoteOwnerName, setRemoteOwnerName] = useState('');
+
+  // Refs for seamless Arrow Key navigation across form elements
+  const formRef = useRef<HTMLFormElement>(null);
+  const tabSignInRef = useRef<HTMLButtonElement>(null);
+  const tabRegisterRef = useRef<HTMLButtonElement>(null);
+
+  // Keyboard navigation: ArrowDown / ArrowUp moves through all form fields
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') {
+      return;
+    }
+
+    const target = e.target as HTMLElement;
+
+    // For Select elements: Left/Right arrow keys cycle options, Up/Down navigate fields
+    if (target.tagName === 'SELECT') {
+      if (e.key === 'ArrowRight') {
+        const sel = target as HTMLSelectElement;
+        if (sel.selectedIndex < sel.options.length - 1) {
+          sel.selectedIndex++;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return;
+      } else if (e.key === 'ArrowLeft') {
+        const sel = target as HTMLSelectElement;
+        if (sel.selectedIndex > 0) {
+          sel.selectedIndex--;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return;
+      }
+    }
+
+    // Allow Enter key on submit button or password input to submit the form normally
+    if (e.key === 'Enter') {
+      if (target.tagName === 'BUTTON' || (target instanceof HTMLInputElement && target.type === 'password')) {
+        return;
+      }
+    }
+
+    const form = formRef.current;
+    if (!form) return;
+
+    // Collect all visible, active inputs, selects, and submit button
+    const fields = Array.from(
+      form.querySelectorAll<HTMLElement>(
+        'input:not([type="hidden"]):not([disabled]), select:not([disabled]), button.login-submit-btn:not([disabled])'
+      )
+    ).filter(el => el.offsetParent !== null);
+
+    const currentIndex = fields.indexOf(target);
+    if (currentIndex === -1) return;
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % fields.length;
+      const nextField = fields[nextIndex];
+      if (nextField) {
+        nextField.focus();
+        if (nextField instanceof HTMLInputElement && nextField.type !== 'password') {
+          nextField.select();
+        }
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      // If pressing ArrowUp on the very first field, move focus up to the active tab button
+      if (currentIndex === 0) {
+        if (mode === 'register') {
+          tabRegisterRef.current?.focus();
+        } else {
+          tabSignInRef.current?.focus();
+        }
+        return;
+      }
+
+      const prevIndex = (currentIndex - 1 + fields.length) % fields.length;
+      const prevField = fields[prevIndex];
+      if (prevField) {
+        prevField.focus();
+        if (prevField instanceof HTMLInputElement && prevField.type !== 'password') {
+          prevField.select();
+        }
+      }
+    }
+  };
 
   const isIdTaken = (id: string) => {
     if (!id) return false;
@@ -70,7 +158,7 @@ export const Login: React.FC = () => {
     // Check local immediately
     if (isIdTaken(clean)) {
       setRemoteIdTaken(true);
-      setRemoteOwnerName('Registered Locally / Demo Account');
+      setRemoteOwnerName(language === 'bn' ? 'নিবন্ধিত ডেমো অ্যাকাউন্ট' : 'Demo Account');
       return;
     }
 
@@ -87,7 +175,7 @@ export const Login: React.FC = () => {
         if (active) {
           if (data && data.length > 0) {
             setRemoteIdTaken(true);
-            setRemoteOwnerName(data[0].name || data[0].email || 'in Database');
+            setRemoteOwnerName(data[0].name || data[0].email || (language === 'bn' ? 'ডাটাবেজে বিদ্যমান' : 'in Database'));
           } else {
             setRemoteIdTaken(false);
             setRemoteOwnerName('');
@@ -104,7 +192,7 @@ export const Login: React.FC = () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [idNo, role]);
+  }, [idNo, role, language]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,9 +201,9 @@ export const Login: React.FC = () => {
     if (mode === 'login') {
       const { error } = await signIn(email, password);
       if (error) {
-        addToast('error', error.message || 'Invalid credentials. Please check your email and password.', 'Sign In Failed');
+        addToast('error', error.message || t.toastInvalidCredentials, t.toastSignInFailed);
       } else {
-        addToast('success', 'Signed in successfully.', 'Welcome');
+        addToast('success', t.toastSignInSuccess, t.toastWelcome);
       }
     } else {
       const cleanId = idNo.trim();
@@ -126,8 +214,8 @@ export const Login: React.FC = () => {
           setLoading(false);
           addToast(
             'error', 
-            `Student ID must be exactly 9 numeric digits (e.g. 232002038). Currently entered: ${cleanId.length} digit${cleanId.length === 1 ? '' : 's'}.`, 
-            'Invalid Student ID'
+            t.toastInvalidStudentIdMsg.replace('{count}', String(cleanId.length)), 
+            t.toastInvalidStudentIdTitle
           );
           return;
         }
@@ -138,8 +226,8 @@ export const Login: React.FC = () => {
           setLoading(false);
           addToast(
             'error', 
-            `Student email must match your 9-digit University ID exactly: "${expectedEmail}". You cannot open an account with "${cleanEmail}".`, 
-            'Email Must Match Student ID'
+            t.toastEmailMatchMsg.replace('{expected}', expectedEmail).replace('{actual}', cleanEmail), 
+            t.toastEmailMatchTitle
           );
           return;
         }
@@ -150,8 +238,8 @@ export const Login: React.FC = () => {
         setLoading(false);
         addToast(
           'error',
-          `University ID "${cleanId}" is already registered (${remoteOwnerName || 'Existing User'}). Each ID can only have one unique account. Please Sign In instead.`,
-          'ID Already Registered'
+          t.toastIdTakenMsg.replace('{id}', cleanId).replace('{owner}', remoteOwnerName || (language === 'bn' ? 'বিদ্যমান অ্যাকাউন্ট' : 'Existing Account')),
+          t.toastIdTakenTitle
         );
         return;
       }
@@ -167,11 +255,11 @@ export const Login: React.FC = () => {
         if (dbMatches && dbMatches.length > 0) {
           setLoading(false);
           setRemoteIdTaken(true);
-          setRemoteOwnerName(dbMatches[0].name || dbMatches[0].email || 'in Database');
+          setRemoteOwnerName(dbMatches[0].name || dbMatches[0].email || (language === 'bn' ? 'ডাটাবেজে রয়েছে' : 'in Database'));
           addToast(
             'error',
-            `University ID "${cleanId}" is already registered (${dbMatches[0].name || dbMatches[0].email}). Duplicate accounts with the same ID are strictly prohibited. Please switch to Sign In.`,
-            'ID Already Registered'
+            t.toastIdTakenMsg.replace('{id}', cleanId).replace('{owner}', dbMatches[0].name || dbMatches[0].email),
+            t.toastIdTakenTitle
           );
           return;
         }
@@ -182,9 +270,9 @@ export const Login: React.FC = () => {
       const finalDept = role === 'conductor' ? 'Transport & Fleet Division' : department;
       const { error } = await signUp(email, password, name, role, finalDept, idNo);
       if (error) {
-        addToast('error', error.message || 'Registration failed with Supabase.', 'Sign Up Failed');
+        addToast('error', error.message || (language === 'bn' ? 'রেজিস্ট্রেশন সম্পন্ন করা সম্ভব হয়নি।' : 'Registration failed.'), t.toastSignUpFailed);
       } else {
-        addToast('success', 'Account created successfully! Welcome to Campus 360.', 'Account Created');
+        addToast('success', t.toastAccountCreatedMsg, t.toastAccountCreated);
       }
     }
 
@@ -211,41 +299,67 @@ export const Login: React.FC = () => {
       padding: '2rem 1rem',
       position: 'relative'
     }}>
-      {/* Theme Mode Segmented Switcher Top-Right (Night, Light, Pink) */}
-      <div className="login-theme-switcher" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
-        <div className="theme-segmented-control" role="group" aria-label="Campus 360 Theme Selector">
-          <button 
-            type="button"
-            className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
-            onClick={() => setTheme('dark')}
-            aria-label="Night Mode"
-            title="Night Mode (Dark Slate)"
-          >
-            <Moon size={15} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
-            <span>Night</span>
-          </button>
+      {/* Unified Non-Overlapping Top Bar for Language & Theme (Single Line on all iOS & Android screens) */}
+      <div className="login-top-bar">
+        <div className="login-top-bar-left">
+          <div className="lang-segmented-control login-lang-control" role="group" aria-label="Language Selector">
+            <button 
+              type="button"
+              className={`lang-segmented-btn ${language === 'bn' ? 'active' : ''}`}
+              onClick={() => setLanguage('bn')}
+              aria-label="বাংলা ভাষা"
+              title="বাংলা ভাষা নির্বাচন করুন"
+            >
+              <Globe size={13} />
+              <span>বাংলা</span>
+            </button>
+            <button 
+              type="button"
+              className={`lang-segmented-btn ${language === 'en' ? 'active' : ''}`}
+              onClick={() => setLanguage('en')}
+              aria-label="English Language"
+              title="Switch to English"
+            >
+              <span>English</span>
+            </button>
+          </div>
+        </div>
 
-          <button 
-            type="button"
-            className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
-            onClick={() => setTheme('light')}
-            aria-label="Light Mode"
-            title="Light Mode (Clean Daylight)"
-          >
-            <Sun size={15} color={theme === 'light' ? '#d97706' : 'currentColor'} />
-            <span>Light</span>
-          </button>
+        <div className="login-top-bar-right">
+          <div className="theme-segmented-control login-theme-control" role="group" aria-label="Campus 360 Theme Selector">
+            <button 
+              type="button"
+              className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
+              onClick={() => setTheme('dark')}
+              aria-label={t.dashThemeNight}
+              title={language === 'bn' ? 'নাইট মোড' : 'Night Mode (Dark Slate)'}
+            >
+              <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+              <span className="theme-btn-text">{t.dashThemeNight}</span>
+            </button>
 
-          <button 
-            type="button"
-            className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
-            onClick={() => setTheme('pink')}
-            aria-label="Pink Mode"
-            title="Pink Mode (Sakura Rose Glow)"
-          >
-            <Sparkles size={15} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
-            <span>Pink</span>
-          </button>
+            <button 
+              type="button"
+              className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
+              onClick={() => setTheme('light')}
+              aria-label={t.dashThemeLight}
+              title={language === 'bn' ? 'লাইট মোড' : 'Light Mode (Clean Daylight)'}
+            >
+              <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+              <span className="theme-btn-text">{t.dashThemeLight}</span>
+            </button>
+
+            <button 
+              type="button"
+              className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
+              onClick={() => setTheme('pink')}
+              aria-label={t.dashThemePink}
+              title={language === 'bn' ? 'গোলাপী মোড' : 'Pink Mode (Sakura Rose Glow)'}
+            >
+              <Sparkles size={14} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
+              <span className="theme-btn-text">{t.dashThemePink}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -287,7 +401,7 @@ export const Login: React.FC = () => {
             Campus<span style={{ color: 'var(--gub-green)' }}>360</span>
           </h1>
           <p className="login-brand-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Green University of Bangladesh
+            {t.brandSubtitle}
           </p>
         </div>
 
@@ -302,7 +416,18 @@ export const Login: React.FC = () => {
         }}>
           <button
             type="button"
+            ref={tabSignInRef}
             onClick={() => setMode('login')}
+            onKeyDown={e => {
+              if (e.key === 'ArrowRight') {
+                setMode('register');
+                setTimeout(() => tabRegisterRef.current?.focus(), 10);
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const first = formRef.current?.querySelector<HTMLElement>('input:not([type="hidden"]):not([disabled])');
+                first?.focus();
+              }
+            }}
             style={{
               flex: 1,
               padding: '0.65rem',
@@ -314,11 +439,22 @@ export const Login: React.FC = () => {
               transition: 'all var(--transition-fast)'
             }}
           >
-            Sign In
+            {t.tabSignIn}
           </button>
           <button
             type="button"
+            ref={tabRegisterRef}
             onClick={() => setMode('register')}
+            onKeyDown={e => {
+              if (e.key === 'ArrowLeft') {
+                setMode('login');
+                setTimeout(() => tabSignInRef.current?.focus(), 10);
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const first = formRef.current?.querySelector<HTMLElement>('input:not([type="hidden"]):not([disabled])');
+                first?.focus();
+              }
+            }}
             style={{
               flex: 1,
               padding: '0.65rem',
@@ -330,22 +466,28 @@ export const Login: React.FC = () => {
               transition: 'all var(--transition-fast)'
             }}
           >
-            Create Account
+            {t.tabCreateAccount}
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="login-form" style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        {/* Form with Full Keyboard Arrow Navigation */}
+        <form 
+          ref={formRef}
+          onSubmit={handleSubmit} 
+          onKeyDown={handleFormKeyDown}
+          className="login-form" 
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
+        >
           {mode === 'register' && (
             <>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">
-                  <User size={14} style={{ display: 'inline', marginRight: '4px' }} /> Full Name
+                  <User size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t.labelFullName}
                 </label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder={role === 'conductor' ? 'e.g. Md. Rafiqul Islam (Conductor)' : 'Ahmed Sizan'}
+                  placeholder={role === 'conductor' ? t.placeholderNameConductor : t.placeholderNameStudent}
                   value={name}
                   onChange={e => setName(e.target.value)}
                   style={inputStyle}
@@ -355,7 +497,7 @@ export const Login: React.FC = () => {
 
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">
-                  <UserCheck size={14} style={{ display: 'inline', marginRight: '4px' }} /> Role
+                  <UserCheck size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t.labelRole}
                 </label>
                 <select
                   className="form-select"
@@ -373,10 +515,10 @@ export const Login: React.FC = () => {
                   }}
                   style={inputStyle}
                 >
-                  <option value="student">Student</option>
-                  <option value="teacher">Teacher / Faculty</option>
-                  <option value="admin">Administrator</option>
-                  <option value="conductor">Bus Conductor (Transit Staff)</option>
+                  <option value="student">{t.roleStudent}</option>
+                  <option value="teacher">{t.roleTeacher}</option>
+                  <option value="admin">{t.roleAdmin}</option>
+                  <option value="conductor">{t.roleConductor}</option>
                 </select>
               </div>
 
@@ -384,7 +526,7 @@ export const Login: React.FC = () => {
               {role !== 'conductor' && (
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">
-                    <BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> Department
+                    <BookOpen size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t.labelDepartment}
                   </label>
                   <select
                     className="form-select"
@@ -392,12 +534,12 @@ export const Login: React.FC = () => {
                     onChange={e => setDepartment(e.target.value)}
                     style={inputStyle}
                   >
-                    <option value="Computer Science & Engineering">CSE — Computer Science & Engineering</option>
-                    <option value="Electrical & Electronic Engineering">EEE — Electrical & Electronic Engineering</option>
-                    <option value="Textile Engineering">TE — Textile Engineering</option>
-                    <option value="Green Business School">BBA — Green Business School</option>
-                    <option value="Department of English">English Department</option>
-                    <option value="Department of Law">Law Department</option>
+                    <option value="Computer Science & Engineering">{t.deptCSE}</option>
+                    <option value="Electrical & Electronic Engineering">{t.deptEEE}</option>
+                    <option value="Textile Engineering">{t.deptTE}</option>
+                    <option value="Green Business School">{t.deptBBA}</option>
+                    <option value="Department of English">{t.deptEnglish}</option>
+                    <option value="Department of Law">{t.deptLaw}</option>
                   </select>
                 </div>
               )}
@@ -406,7 +548,7 @@ export const Login: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <label className="form-label" style={{ marginBottom: 0 }}>
                     <Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> 
-                    {role === 'conductor' ? 'Staff / Conductor ID Number' : 'University ID Number'}
+                    {role === 'conductor' ? t.labelConductorId : t.labelUniversityId}
                   </label>
                   {role === 'student' && (
                     <span style={{ 
@@ -414,7 +556,7 @@ export const Login: React.FC = () => {
                       fontWeight: 700, 
                       color: idNo.length === 9 ? '#10b981' : idNo.length > 0 ? '#f59e0b' : 'var(--text-muted)' 
                     }}>
-                      {idNo.length}/9 digits
+                      {t.digitsCounter.replace('{count}', String(idNo.length))}
                     </span>
                   )}
                 </div>
@@ -423,10 +565,10 @@ export const Login: React.FC = () => {
                   className="form-input"
                   placeholder={
                     role === 'conductor' 
-                      ? 'e.g. STAFF-042 or GUB-COND-01' 
+                      ? t.placeholderIdConductor
                       : role === 'student' 
-                      ? 'e.g. 232002038 (Exactly 9 digits)' 
-                      : 'e.g. FAC-CSE-104'
+                      ? t.placeholderIdStudent
+                      : t.placeholderIdTeacher
                   }
                   value={idNo}
                   maxLength={role === 'student' ? 9 : 25}
@@ -467,25 +609,34 @@ export const Login: React.FC = () => {
                         fontWeight: 600 
                       }}>
                         <AlertCircle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
-                        <span>University ID ({idNo}) is already registered! You cannot create multiple accounts with the same ID. Please switch to Sign In.</span>
+                        <span>{t.idAlreadyTakenAlert.replace('{id}', idNo)}</span>
                       </div>
                     ) : checkingId ? (
                       <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span>Checking ID uniqueness...</span>
+                        <span>{t.idChecking}</span>
                       </div>
                     ) : idNo.length === 0 ? (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        * University ID must be exactly 9 numeric digits (e.g. <code>232002038</code>).
+                        {t.idRuleNote}
                       </div>
                     ) : idNo.length < 9 ? (
                       <div style={{ fontSize: '0.76rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                         <AlertCircle size={13} color="#f59e0b" />
-                        <span>ID must be 9 digits ({idNo.length}/9). {9 - idNo.length} more needed. Email will be: <code>{idNo}@student.green.ac.bd</code></span>
+                        <span>
+                          {t.idRemainingNote
+                            .replace('{current}', String(idNo.length))
+                            .replace('{needed}', String(9 - idNo.length))
+                            .replace('{email}', `${idNo}@student.green.ac.bd`)}
+                        </span>
                       </div>
                     ) : (
                       <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                         <CheckCircle2 size={13} color="#10b981" />
-                        <span>Valid 9-digit Student ID ({idNo}) is available — Email: <code>{idNo}@student.green.ac.bd</code></span>
+                        <span>
+                          {t.idValidAvailable
+                            .replace('{id}', idNo)
+                            .replace('{email}', `${idNo}@student.green.ac.bd`)}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -494,10 +645,12 @@ export const Login: React.FC = () => {
             </>
           )}
 
+          {/* Email Field with explicit USER requirement: Your Microsoft Account Email */}
           <div className="form-group" style={{ marginBottom: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
               <label className="form-label" style={{ marginBottom: 0 }}>
-                <Mail size={14} style={{ display: 'inline', marginRight: '4px' }} /> Email Address
+                <Mail size={14} style={{ display: 'inline', marginRight: '4px' }} /> 
+                {mode === 'register' ? t.labelEmailRegister : t.labelEmailLogin}
               </label>
               {mode === 'register' && role === 'student' && (
                 <button
@@ -520,16 +673,16 @@ export const Login: React.FC = () => {
                     alignItems: 'center',
                     gap: '4px'
                   }}
-                  title="Click to 1-tap auto-fill official student email"
+                  title={language === 'bn' ? '১-ক্লিকে অফিসিয়াল ইমেইল বসান' : 'Click to auto-fill official Microsoft Teams email'}
                 >
                   {isStudentEmailMatched ? (
                     <>
                       <CheckCircle2 size={12} color="#10b981" />
-                      <span>Matched ({idNo}@student.green.ac.bd)</span>
+                      <span>{t.msAutoFillMatched.replace('{email}', `${idNo}@student.green.ac.bd`)}</span>
                     </>
                   ) : (
                     <>
-                      <span>⚡ 1-Click Fill: {idNo ? `${idNo}@student.green.ac.bd` : '[ID]@student.green.ac.bd'}</span>
+                      <span>{t.msAutoFillChip.replace('{email}', idNo ? `${idNo}@student.green.ac.bd` : '[ID]@student.green.ac.bd')}</span>
                     </>
                   )}
                 </button>
@@ -540,8 +693,8 @@ export const Login: React.FC = () => {
               className="form-input"
               placeholder={
                 mode === 'register' && role === 'student'
-                  ? (idNo ? `${idNo}@student.green.ac.bd` : '232002038@student.green.ac.bd')
-                  : 'user@green.edu.bd'
+                  ? (idNo ? `${idNo}@student.green.ac.bd` : t.placeholderEmailRegister)
+                  : t.placeholderEmailLogin
               }
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -556,17 +709,21 @@ export const Login: React.FC = () => {
               required
             />
 
-            {/* Student Email Exact ID Match & Instruction Banner */}
+            {/* Student Microsoft Email Exact Match & Guidance Banner */}
             {mode === 'register' && role === 'student' && (
               <div style={{ marginTop: '0.35rem' }}>
                 {idNo.length < 9 ? (
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    * Prothome upore 9-digit University ID likhun. Sekhane ID likhle email automatic <code>{idNo || '232002038'}@student.green.ac.bd</code> set hoye jabe.
+                    {t.msTeamsNote}
                   </div>
                 ) : isStudentEmailMatched ? (
                   <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                     <CheckCircle2 size={13} color="#10b981" />
-                    <span>Exact match: <code>{email}</code> (Matched with ID: {idNo})</span>
+                    <span>
+                      {language === 'bn' 
+                        ? `যথাযথ মিল রয়েছে: ${email} (আইডি: ${idNo})` 
+                        : `Exact match: ${email} (Matched with ID: ${idNo})`}
+                    </span>
                   </div>
                 ) : (
                   <div style={{
@@ -582,10 +739,12 @@ export const Login: React.FC = () => {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#ef4444', fontWeight: 700 }}>
                       <AlertCircle size={14} color="#ef4444" />
-                      <span>ID & Email Address Match Required</span>
+                      <span>{language === 'bn' ? 'আইডি ও মাইক্রোসফট ইমেইল মিল থাকা আবশ্যক' : 'ID & Microsoft Email Match Required'}</span>
                     </div>
                     <div style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                      Apnar University ID holo <strong>{idNo}</strong>। Tai apnar student email obosshoi <strong>{idNo}@student.green.ac.bd</strong> hote hobe (onno kono email allowed na)।
+                      {t.msEmailMismatchAlert
+                        .replace('{expected}', `${idNo}@student.green.ac.bd`)
+                        .replace('{actual}', email)}
                     </div>
                     <button
                       type="button"
@@ -606,7 +765,7 @@ export const Login: React.FC = () => {
                         gap: '5px'
                       }}
                     >
-                      <span>⚡ Click to Auto-Fill: {idNo}@student.green.ac.bd</span>
+                      <span>{t.msAutoFillChip.replace('{email}', `${idNo}@student.green.ac.bd`)}</span>
                     </button>
                   </div>
                 )}
@@ -616,13 +775,13 @@ export const Login: React.FC = () => {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">
-              <Lock size={14} style={{ display: 'inline', marginRight: '4px' }} /> Password
+              <Lock size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t.labelPassword}
             </label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
                 className="form-input"
-                placeholder="••••••••"
+                placeholder={t.placeholderPassword}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 style={{ ...inputStyle, paddingRight: '42px' }}
@@ -658,13 +817,13 @@ export const Login: React.FC = () => {
               disabled={loading || (mode === 'register' && isCurrentIdDuplicate)}
             >
               {loading ? (
-                'Please wait...'
+                t.btnPleaseWait
               ) : mode === 'login' ? (
-                <>Sign In <ArrowRight size={18} /></>
+                <>{t.btnSignIn} <ArrowRight size={18} /></>
               ) : isCurrentIdDuplicate ? (
-                <>ID Already Registered — Switch to Sign In</>
+                <>{t.btnIdTakenDisabled}</>
               ) : (
-                <>Create Account <CheckCircle2 size={18} /></>
+                <>{t.btnCreateAccount} <CheckCircle2 size={18} /></>
               )}
             </button>
           </div>
@@ -672,7 +831,7 @@ export const Login: React.FC = () => {
           {mode === 'login' && (
             <div className="login-demo-box" style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
               <span className="login-demo-title" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.65rem' }}>
-                Quick 1-Tap Tablet Demo Login
+                {t.demoTitle}
               </span>
               <div className="login-demo-buttons" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
@@ -685,14 +844,14 @@ export const Login: React.FC = () => {
                     const { error } = await signIn('student@green.edu.bd', 'student123');
                     setLoading(false);
                     if (error) {
-                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                      addToast('error', error.message || t.toastSignInFailed, t.toastSignInFailed);
                     } else {
-                      addToast('success', 'Signed in as Ahmed Sizan (Student)', 'Welcome Back');
+                      addToast('success', language === 'bn' ? 'আহমেদ সিজান (শিক্ষার্থী) হিসেবে সাইন ইন সম্পন্ন হয়েছে।' : 'Signed in as Ahmed Sizan (Student)', t.toastWelcome);
                     }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                 >
-                  Student Demo
+                  {t.demoStudent}
                 </button>
                 <button
                   type="button"
@@ -704,14 +863,14 @@ export const Login: React.FC = () => {
                     const { error } = await signIn('teacher@green.edu.bd', 'teacher123');
                     setLoading(false);
                     if (error) {
-                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                      addToast('error', error.message || t.toastSignInFailed, t.toastSignInFailed);
                     } else {
-                      addToast('success', 'Signed in as Dr. Mohammad Nazmul Islam (Faculty)', 'Welcome Back');
+                      addToast('success', language === 'bn' ? 'ড. মোহাম্মদ নাজমুল ইসলাম (অনুষদ) হিসেবে সাইন ইন সম্পন্ন হয়েছে।' : 'Signed in as Dr. Mohammad Nazmul Islam (Faculty)', t.toastWelcome);
                     }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                 >
-                  Faculty Demo
+                  {t.demoTeacher}
                 </button>
                 <button
                   type="button"
@@ -723,14 +882,14 @@ export const Login: React.FC = () => {
                     const { error } = await signIn('admin@green.edu.bd', 'admin123');
                     setLoading(false);
                     if (error) {
-                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                      addToast('error', error.message || t.toastSignInFailed, t.toastSignInFailed);
                     } else {
-                      addToast('success', 'Signed in as Administrator', 'Welcome Back');
+                      addToast('success', language === 'bn' ? 'প্রশাসক হিসেবে সাইন ইন সম্পন্ন হয়েছে।' : 'Signed in as Administrator', t.toastWelcome);
                     }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                 >
-                  Admin Demo
+                  {t.demoAdmin}
                 </button>
                 <button
                   type="button"
@@ -742,14 +901,14 @@ export const Login: React.FC = () => {
                     const { error } = await signIn('conductor@green.edu.bd', 'conductor123');
                     setLoading(false);
                     if (error) {
-                      addToast('error', error.message || 'Login failed', 'Sign In Failed');
+                      addToast('error', error.message || t.toastSignInFailed, t.toastSignInFailed);
                     } else {
-                      addToast('success', 'Signed in as Bus Conductor', 'Welcome Back');
+                      addToast('success', language === 'bn' ? 'বাস কন্ডাকটর হিসেবে সাইন ইন সম্পন্ন হয়েছে।' : 'Signed in as Bus Conductor', t.toastWelcome);
                     }
                   }}
                   style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', border: '1.5px solid #f59e0b', color: '#f59e0b', fontWeight: 700 }}
                 >
-                  🚌 Conductor Demo
+                  🚌 {t.demoConductor}
                 </button>
               </div>
             </div>

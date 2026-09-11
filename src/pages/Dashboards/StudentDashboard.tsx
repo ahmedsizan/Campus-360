@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import { translations } from '../../translations';
 import { 
   Bus, 
   Utensils, 
@@ -12,13 +13,25 @@ import {
   Download,
   Moon,
   Sun,
-  Sparkles
+  Sparkles,
+  Globe
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { profile } = useAuth();
-  const { notices, buses, setActiveTab, triggerInstallApp, setIsProfileModalOpen, theme, setTheme } = useApp();
+  const { 
+    notices, 
+    buses, 
+    setActiveTab, 
+    triggerInstallApp, 
+    setIsProfileModalOpen, 
+    theme, 
+    setTheme,
+    language,
+    setLanguage
+  } = useApp();
 
+  const t = translations[language];
   const activeBuses = buses.filter(b => b.status === 'active');
   const recentNotices = notices.slice(0, 3);
 
@@ -47,67 +60,95 @@ export const StudentDashboard: React.FC = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
               <span style={{ fontSize: '0.85rem', color: 'var(--gub-green)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Student Portal
+                {t.dashStudentPortal}
               </span>
-              <span className="badge badge-emerald">Summer 2026</span>
+              <span className="badge badge-emerald">{t.dashSemester}</span>
             </div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Welcome back, {profile?.name}!</h2>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+              {t.dashWelcomeBack.replace('{name}', profile?.name || '')}
+            </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              {profile?.department} • ID: {profile?.id_no}
+              {profile?.department} • {t.dashId}: {profile?.id_no}
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
-          {/* Theme Selector (Night / Light / Pink) */}
-          <div className="theme-segmented-control" role="group" aria-label="Appearance Theme Selector">
-            <button 
-              type="button"
-              className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
-              onClick={() => setTheme('dark')}
-              title="Night Mode (Dark Slate)"
-              aria-label="Night Mode"
-            >
-              <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
-              <span>Night</span>
-            </button>
-            <button 
-              type="button"
-              className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
-              onClick={() => setTheme('light')}
-              title="Light Mode (Clean Daylight)"
-              aria-label="Light Mode"
-            >
-              <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
-              <span>Light</span>
-            </button>
-            <button 
-              type="button"
-              className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
-              onClick={() => setTheme('pink')}
-              title="Pink Mode (Sakura Rose Glow)"
-              aria-label="Pink Mode"
-            >
-              <Sparkles size={14} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
-              <span>Pink</span>
-            </button>
+          {/* Dedicated Non-Overlapping Single-Row Controls for Language & Theme */}
+          <div className="banner-controls-group">
+            {/* Language Switcher (বাংলা | English) */}
+            <div className="lang-segmented-control dashboard-lang-control" role="group" aria-label="Language Selector">
+              <button 
+                type="button"
+                className={`lang-segmented-btn ${language === 'bn' ? 'active' : ''}`}
+                onClick={() => setLanguage('bn')}
+                aria-label="বাংলা ভাষা"
+                title="বাংলা ভাষা নির্বাচন করুন"
+              >
+                <Globe size={13} />
+                <span>বাংলা</span>
+              </button>
+              <button 
+                type="button"
+                className={`lang-segmented-btn ${language === 'en' ? 'active' : ''}`}
+                onClick={() => setLanguage('en')}
+                aria-label="English Language"
+                title="Switch to English"
+              >
+                <span>English</span>
+              </button>
+            </div>
+
+            {/* Theme Selector (Night / Light / Pink) */}
+            <div className="theme-segmented-control dashboard-theme-control" role="group" aria-label="Appearance Theme Selector">
+              <button 
+                type="button"
+                className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
+                onClick={() => setTheme('dark')}
+                title={language === 'bn' ? 'নাইট মোড' : 'Night Mode (Dark Slate)'}
+                aria-label="Night Mode"
+              >
+                <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+                <span className="theme-btn-text">{t.dashThemeNight}</span>
+              </button>
+              <button 
+                type="button"
+                className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
+                onClick={() => setTheme('light')}
+                title={language === 'bn' ? 'লাইট মোড' : 'Light Mode (Clean Daylight)'}
+                aria-label="Light Mode"
+              >
+                <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+                <span className="theme-btn-text">{t.dashThemeLight}</span>
+              </button>
+              <button 
+                type="button"
+                className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
+                onClick={() => setTheme('pink')}
+                title={language === 'bn' ? 'গোলাপী মোড' : 'Pink Mode (Sakura Rose Glow)'}
+                aria-label="Pink Mode"
+              >
+                <Sparkles size={14} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
+                <span className="theme-btn-text">{t.dashThemePink}</span>
+              </button>
+            </div>
           </div>
 
           <button className="btn btn-primary" onClick={() => setActiveTab('cafeteria')}>
-            <Utensils size={17} /> Order Food
+            <Utensils size={17} /> {t.dashOrderFood}
           </button>
           <button className="btn btn-secondary" onClick={() => setActiveTab('transport')}>
-            <Bus size={17} /> Track Bus
+            <Bus size={17} /> {t.dashTrackBus}
           </button>
           <button className="btn btn-outline" onClick={triggerInstallApp} style={{ borderColor: 'var(--gub-green)', color: 'var(--gub-green)' }}>
-            <Download size={17} /> Install App
+            <Download size={17} /> {t.navInstallApp}
           </button>
         </div>
       </div>
 
       {/* Quick Access Tiles */}
       <div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.85rem' }}>Campus Quick Services</h3>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.85rem' }}>{t.dashQuickServices}</h3>
         <div className="grid-quick-services">
           <div 
             className="glass-card glass-card-interactive" 
@@ -117,8 +158,8 @@ export const StudentDashboard: React.FC = () => {
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
               <Utensils size={24} />
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Cafeteria</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Order meals & snacks</p>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{t.navCafeteria}</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{t.dashOrderMealsSnacks}</p>
           </div>
 
           <div 
@@ -129,8 +170,8 @@ export const StudentDashboard: React.FC = () => {
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
               <Bus size={24} />
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Bus Transport</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Schedules & 45-seat booking</p>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{t.navTransport}</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{t.dashSchedulesBooking}</p>
           </div>
 
           <div 
@@ -141,8 +182,8 @@ export const StudentDashboard: React.FC = () => {
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
               <Bell size={24} />
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Notice Board</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Official announcements</p>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{t.navNotices}</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{t.dashOfficialAnnouncements}</p>
           </div>
 
           <div 
@@ -153,8 +194,8 @@ export const StudentDashboard: React.FC = () => {
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
               <Search size={24} />
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Lost & Found</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Report & claim items</p>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{t.navLostFound}</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{t.dashReportClaimItems}</p>
           </div>
 
           <div 
@@ -165,8 +206,8 @@ export const StudentDashboard: React.FC = () => {
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(244, 63, 94, 0.15)', color: '#fb7185', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
               <AlertCircle size={24} />
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Grievance Box</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Anonymous complaints</p>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>{t.dashGrievanceBox}</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{t.dashAnonymousComplaints}</p>
           </div>
         </div>
       </div>
@@ -178,10 +219,10 @@ export const StudentDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Bus size={18} color="var(--gub-green)" />
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>University Bus Fleet (4 Lines)</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashBusFleet}</h3>
             </div>
             <button className="btn btn-outline btn-sm" onClick={() => setActiveTab('transport')}>
-              View All <ArrowRight size={14} />
+              {t.dashViewAll} <ArrowRight size={14} />
             </button>
           </div>
 
@@ -206,9 +247,9 @@ export const StudentDashboard: React.FC = () => {
         {/* Latest Notices */}
         <div className="glass-card" style={{ padding: '1.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Latest Official Notices</h3>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{t.dashLatestNotices}</h3>
             <button className="btn btn-outline btn-sm" onClick={() => setActiveTab('notices')}>
-              Board <ArrowRight size={14} />
+              {t.dashNoticeBoard} <ArrowRight size={14} />
             </button>
           </div>
 
@@ -234,3 +275,4 @@ export const StudentDashboard: React.FC = () => {
     </div>
   );
 };
+

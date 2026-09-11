@@ -13,7 +13,8 @@ import {
   Notice, 
   Order, 
   ToastNotification,
-  ThemeMode 
+  ThemeMode,
+  Language
 } from '../types';
 import { useAuth } from './AuthContext';
 
@@ -22,6 +23,10 @@ interface AppContextType {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
+
+  // Language (English / বাংলা)
+  language: Language;
+  setLanguage: (lang: Language) => void;
 
   // Active Tab
   activeTab: NavigationTab;
@@ -123,6 +128,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<NavigationTab>('dashboard');
+
+  // Language State (Default: 'bn' or 'en' - saved in localStorage)
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('campus360_lang');
+    if (saved === 'bn' || saved === 'en') {
+      return saved as Language;
+    }
+    return 'bn';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('campus360_lang', language);
+  }, [language]);
 
   // Modals & Drawers
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -1017,6 +1035,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         theme,
         setTheme,
         toggleTheme,
+        language,
+        setLanguage,
         activeTab,
         setActiveTab,
         notices,
