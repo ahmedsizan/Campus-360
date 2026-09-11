@@ -15,6 +15,7 @@ import {
   Sun, 
   Moon,
   Sparkles,
+  AlertCircle,
   UserCheck
 } from 'lucide-react';
 import { UserRole } from '../types';
@@ -47,6 +48,32 @@ export const Login: React.FC = () => {
         addToast('success', 'Signed in successfully.', 'Welcome');
       }
     } else {
+      // Validate Student Registration Rules (Strictly 9-digit ID and exact [ID]@student.green.ac.bd match)
+      if (role === 'student') {
+        const cleanId = idNo.trim();
+        if (cleanId.length !== 9 || !/^\d{9}$/.test(cleanId)) {
+          setLoading(false);
+          addToast(
+            'error', 
+            `Student ID must be exactly 9 numeric digits (e.g. 232002038). Currently entered: ${cleanId.length} digit${cleanId.length === 1 ? '' : 's'}.`, 
+            'Invalid Student ID'
+          );
+          return;
+        }
+
+        const cleanEmail = email.trim().toLowerCase();
+        const expectedEmail = `${cleanId}@student.green.ac.bd`;
+        if (cleanEmail !== expectedEmail) {
+          setLoading(false);
+          addToast(
+            'error', 
+            `Student email must match your 9-digit University ID exactly: "${expectedEmail}". You cannot open an account with "${cleanEmail}".`, 
+            'Email Must Match Student ID'
+          );
+          return;
+        }
+      }
+
       const finalDept = role === 'conductor' ? 'Transport & Fleet Division' : department;
       const { error } = await signUp(email, password, name, role, finalDept, idNo);
       if (error) {
@@ -66,8 +93,10 @@ export const Login: React.FC = () => {
     fontWeight: 500
   };
 
+  const isStudentEmailMatched = role === 'student' && idNo.trim().length === 9 && email.trim().toLowerCase() === `${idNo.trim()}@student.green.ac.bd`;
+
   return (
-    <div style={{
+    <div className="login-page-container" style={{
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
@@ -77,7 +106,7 @@ export const Login: React.FC = () => {
       position: 'relative'
     }}>
       {/* Theme Mode Segmented Switcher Top-Right (Night, Light, Pink) */}
-      <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
+      <div className="login-theme-switcher" style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', zIndex: 10 }}>
         <div className="theme-segmented-control" role="group" aria-label="Campus 360 Theme Selector">
           <button 
             type="button"
@@ -115,7 +144,7 @@ export const Login: React.FC = () => {
       </div>
 
       {/* Centered Auth Card */}
-      <div className="glass-card animate-fade-in" style={{
+      <div className="glass-card animate-fade-in login-auth-card" style={{
         maxWidth: '460px',
         width: '100%',
         padding: '2.5rem',
@@ -129,8 +158,8 @@ export const Login: React.FC = () => {
           : '1px solid var(--border-card)'
       }}>
         {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
+        <div className="login-brand-header" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="login-brand-icon" style={{
             width: '56px',
             height: '56px',
             borderRadius: 'var(--radius-lg)',
@@ -148,16 +177,16 @@ export const Login: React.FC = () => {
           }}>
             <GraduationCap size={32} />
           </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>
+          <h1 className="login-brand-title" style={{ fontSize: '1.75rem', fontWeight: 800 }}>
             Campus<span style={{ color: 'var(--gub-green)' }}>360</span>
           </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+          <p className="login-brand-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
             Green University of Bangladesh
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div style={{
+        <div className="login-tab-switcher" style={{
           display: 'flex',
           background: theme === 'dark' ? '#0f172a' : theme === 'pink' ? 'rgba(236, 72, 153, 0.12)' : '#e2e8f0',
           borderRadius: 'var(--radius-md)',
@@ -200,7 +229,7 @@ export const Login: React.FC = () => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        <form onSubmit={handleSubmit} className="login-form" style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           {mode === 'register' && (
             <>
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -225,7 +254,17 @@ export const Login: React.FC = () => {
                 <select
                   className="form-select"
                   value={role}
-                  onChange={e => setRole(e.target.value as UserRole)}
+                  onChange={e => {
+                    const newRole = e.target.value as UserRole;
+                    setRole(newRole);
+                    if (newRole === 'student') {
+                      const clean = idNo.trim().replace(/\D/g, '').slice(0, 9);
+                      setIdNo(clean);
+                      if (clean) {
+                        setEmail(`${clean}@student.green.ac.bd`);
+                      }
+                    }
+                  }}
                   style={inputStyle}
                 >
                   <option value="student">Student</option>
@@ -258,35 +297,193 @@ export const Login: React.FC = () => {
               )}
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">
-                  <Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> {role === 'conductor' ? 'Staff / Conductor ID Number' : 'University ID Number'}
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>
+                    <Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> 
+                    {role === 'conductor' ? 'Staff / Conductor ID Number' : 'University ID Number'}
+                  </label>
+                  {role === 'student' && (
+                    <span style={{ 
+                      fontSize: '0.74rem', 
+                      fontWeight: 700, 
+                      color: idNo.length === 9 ? '#10b981' : idNo.length > 0 ? '#f59e0b' : 'var(--text-muted)' 
+                    }}>
+                      {idNo.length}/9 digits
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder={role === 'conductor' ? 'e.g. STAFF-042 or GUB-COND-01' : 'e.g. 221002001'}
+                  placeholder={
+                    role === 'conductor' 
+                      ? 'e.g. STAFF-042 or GUB-COND-01' 
+                      : role === 'student' 
+                      ? 'e.g. 232002038 (Exactly 9 digits)' 
+                      : 'e.g. FAC-CSE-104'
+                  }
                   value={idNo}
-                  onChange={e => setIdNo(e.target.value)}
-                  style={inputStyle}
+                  maxLength={role === 'student' ? 9 : 25}
+                  onChange={e => {
+                    let val = e.target.value;
+                    if (role === 'student') {
+                      val = val.replace(/\D/g, '').slice(0, 9);
+                      // Instantly sync email: as soon as ID is typed, email immediately becomes [ID]@student.green.ac.bd
+                      setEmail(val ? `${val}@student.green.ac.bd` : '');
+                    }
+                    setIdNo(val);
+                  }}
+                  style={{
+                    ...inputStyle,
+                    borderColor: role === 'student' && idNo.length > 0 && idNo.length !== 9 
+                      ? '#f59e0b' 
+                      : role === 'student' && idNo.length === 9 
+                      ? '#10b981' 
+                      : inputStyle.borderColor
+                  }}
                   required
                 />
+                {role === 'student' && (
+                  <div style={{ marginTop: '0.35rem' }}>
+                    {idNo.length === 0 ? (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        * University ID must be exactly 9 numeric digits (e.g. <code>232002038</code>).
+                      </div>
+                    ) : idNo.length < 9 ? (
+                      <div style={{ fontSize: '0.76rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                        <AlertCircle size={13} color="#f59e0b" />
+                        <span>ID must be 9 digits ({idNo.length}/9). {9 - idNo.length} more needed. Email will be: <code>{idNo}@student.green.ac.bd</code></span>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                        <CheckCircle2 size={13} color="#10b981" />
+                        <span>Valid 9-digit Student ID ({idNo}) — Email: <code>{idNo}@student.green.ac.bd</code></span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">
-              <Mail size={14} style={{ display: 'inline', marginRight: '4px' }} /> Email Address
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>
+                <Mail size={14} style={{ display: 'inline', marginRight: '4px' }} /> Email Address
+              </label>
+              {mode === 'register' && role === 'student' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (idNo) {
+                      setEmail(`${idNo}@student.green.ac.bd`);
+                    }
+                  }}
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: isStudentEmailMatched ? '#10b981' : '#f59e0b',
+                    background: isStudentEmailMatched ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                    border: `1px solid ${isStudentEmailMatched ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.4)'}`,
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Click to 1-tap auto-fill official student email"
+                >
+                  {isStudentEmailMatched ? (
+                    <>
+                      <CheckCircle2 size={12} color="#10b981" />
+                      <span>Matched ({idNo}@student.green.ac.bd)</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡ 1-Click Fill: {idNo ? `${idNo}@student.green.ac.bd` : '[ID]@student.green.ac.bd'}</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
             <input
               type="email"
               className="form-input"
-              placeholder="user@green.edu.bd"
+              placeholder={
+                mode === 'register' && role === 'student'
+                  ? (idNo ? `${idNo}@student.green.ac.bd` : '232002038@student.green.ac.bd')
+                  : 'user@green.edu.bd'
+              }
               value={email}
               onChange={e => setEmail(e.target.value)}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                borderColor: mode === 'register' && role === 'student' && email.length > 0 && !isStudentEmailMatched
+                  ? '#ef4444'
+                  : mode === 'register' && role === 'student' && isStudentEmailMatched
+                  ? '#10b981'
+                  : inputStyle.borderColor
+              }}
               required
             />
+
+            {/* Student Email Exact ID Match & Instruction Banner */}
+            {mode === 'register' && role === 'student' && (
+              <div style={{ marginTop: '0.35rem' }}>
+                {idNo.length < 9 ? (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    * Prothome upore 9-digit University ID likhun. Sekhane ID likhle email automatic <code>{idNo || '232002038'}@student.green.ac.bd</code> set hoye jabe.
+                  </div>
+                ) : isStudentEmailMatched ? (
+                  <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                    <CheckCircle2 size={13} color="#10b981" />
+                    <span>Exact match: <code>{email}</code> (Matched with ID: {idNo})</span>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    fontSize: '0.78rem',
+                    marginTop: '0.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#ef4444', fontWeight: 700 }}>
+                      <AlertCircle size={14} color="#ef4444" />
+                      <span>ID & Email Address Match Required</span>
+                    </div>
+                    <div style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                      Apnar University ID holo <strong>{idNo}</strong>। Tai apnar student email obosshoi <strong>{idNo}@student.green.ac.bd</strong> hote hobe (onno kono email allowed na)।
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEmail(`${idNo}@student.green.ac.bd`)}
+                      style={{
+                        alignSelf: 'flex-start',
+                        marginTop: '2px',
+                        padding: '5px 12px',
+                        borderRadius: '4px',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#fff',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.35)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      <span>⚡ Click to Auto-Fill: {idNo}@student.green.ac.bd</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
@@ -323,7 +520,7 @@ export const Login: React.FC = () => {
           <div style={{ marginTop: '0.75rem' }}>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary login-submit-btn"
               style={{ width: '100%', padding: '0.85rem' }}
               disabled={loading}
             >
@@ -336,11 +533,11 @@ export const Login: React.FC = () => {
           </div>
 
           {mode === 'login' && (
-            <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.65rem' }}>
+            <div className="login-demo-box" style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <span className="login-demo-title" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.65rem' }}>
                 Quick 1-Tap Tablet Demo Login
               </span>
-              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div className="login-demo-buttons" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"

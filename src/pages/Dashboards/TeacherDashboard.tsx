@@ -11,12 +11,14 @@ import {
   Bell, 
   FileText, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 export const TeacherDashboard: React.FC = () => {
   const { profile } = useAuth();
-  const { notices, setActiveTab } = useApp();
+  const { notices, setActiveTab, theme, setTheme } = useApp();
 
   const teacherSchedule = [
     { code: 'CSE 411', title: 'Distributed Systems & Cloud Computing', section: 'Sec A (60 Students)', time: '08:30 AM - 10:00 AM', room: 'Building A, Room 402', status: 'Completed' },
@@ -58,7 +60,41 @@ export const TeacherDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
+          {/* Theme Selector (Night / Light / Pink) */}
+          <div className="theme-segmented-control" role="group" aria-label="Appearance Theme Selector">
+            <button 
+              type="button"
+              className={`theme-segmented-btn ${theme === 'dark' ? 'active-dark' : ''}`}
+              onClick={() => setTheme('dark')}
+              title="Night Mode (Dark Slate)"
+              aria-label="Night Mode"
+            >
+              <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+              <span>Night</span>
+            </button>
+            <button 
+              type="button"
+              className={`theme-segmented-btn ${theme === 'light' ? 'active-light' : ''}`}
+              onClick={() => setTheme('light')}
+              title="Light Mode (Clean Daylight)"
+              aria-label="Light Mode"
+            >
+              <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+              <span>Light</span>
+            </button>
+            <button 
+              type="button"
+              className={`theme-segmented-btn ${theme === 'pink' ? 'active-pink' : ''}`}
+              onClick={() => setTheme('pink')}
+              title="Pink Mode (Sakura Rose Glow)"
+              aria-label="Pink Mode"
+            >
+              <Sparkles size={14} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
+              <span>Pink</span>
+            </button>
+          </div>
+
           <button className="btn btn-primary" onClick={() => setActiveTab('notices')}>
             <Bell size={18} /> View Circulars
           </button>

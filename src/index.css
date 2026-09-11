@@ -554,6 +554,28 @@ body.pink-theme input:-webkit-autofill:active {
   box-shadow: 0 0 16px rgba(236, 72, 153, 0.5);
 }
 
+.navbar-theme-control {
+  padding: 3px !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.navbar-theme-btn {
+  padding: 0.28rem 0.55rem !important;
+  font-size: 0.78rem !important;
+  gap: 0.35rem !important;
+}
+
+@media (max-width: 820px) {
+  .navbar-theme-label {
+    display: none !important;
+  }
+  .navbar-theme-btn {
+    padding: 0.35rem !important;
+    gap: 0 !important;
+  }
+}
+
 .form-textarea {
   min-height: 100px;
   resize: vertical;
@@ -1415,6 +1437,132 @@ body.pink-theme input:-webkit-autofill:active {
   }
   .bus-seat-btn span {
     font-size: 0.68rem !important;
+  }
+}
+
+/* =========================================================
+   Mobile Only (Phone Screens <= 640px)
+   Spans full mobile screen naturally without cramped elements
+   Laptop / Desktop screens remain 100% UNTOUCHED
+   ========================================================= */
+@media (max-width: 640px) {
+  .login-page-container {
+    padding: 1rem 0.85rem !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+  }
+
+  .login-theme-switcher {
+    top: 0.85rem !important;
+    right: 0.85rem !important;
+  }
+
+  .login-theme-switcher .theme-segmented-btn {
+    padding: 0.3rem 0.55rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  .login-auth-card {
+    padding: 1.65rem 1.35rem !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  .login-brand-header {
+    margin-bottom: 1.15rem !important;
+  }
+
+  .login-brand-icon {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: var(--radius-md) !important;
+    margin-bottom: 0.55rem !important;
+  }
+
+  .login-brand-icon svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .login-brand-title {
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+  }
+
+  .login-brand-subtitle {
+    font-size: 0.8rem !important;
+    margin-top: 0.15rem !important;
+  }
+
+  .login-tab-switcher {
+    margin-bottom: 1.15rem !important;
+    padding: 3px !important;
+  }
+
+  .login-tab-switcher button {
+    padding: 0.55rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+  }
+
+  .login-form {
+    gap: 0.85rem !important;
+  }
+
+  .login-form .form-group {
+    margin-bottom: 0 !important;
+  }
+
+  .login-form .form-label {
+    font-size: 0.82rem !important;
+    margin-bottom: 4px !important;
+  }
+
+  .login-form .form-input,
+  .login-form .form-select {
+    padding: 0.65rem 0.85rem !important;
+    min-height: 42px !important;
+    font-size: 15px !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .login-submit-btn {
+    padding: 0.75rem !important;
+    min-height: 44px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+  }
+
+  .login-demo-box {
+    margin-top: 1rem !important;
+    padding-top: 0.9rem !important;
+  }
+
+  .login-demo-title {
+    font-size: 0.76rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .login-demo-buttons {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.45rem !important;
+  }
+
+  .login-demo-buttons .btn-sm {
+    padding: 0.38rem 0.5rem !important;
+    font-size: 0.76rem !important;
+    min-height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
   }
 }
 

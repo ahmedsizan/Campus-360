@@ -30,6 +30,7 @@ export const Navbar: React.FC = () => {
   const { profile, signOut } = useAuth();
   const { 
     theme, 
+    setTheme,
     toggleTheme, 
     activeTab, 
     setActiveTab, 
@@ -181,15 +182,41 @@ export const Navbar: React.FC = () => {
               <span>Install App</span>
             </button>
 
-            <button 
-              className="btn btn-secondary btn-icon desktop-only-control" 
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              title={`Current theme: ${theme}. Click to switch.`}
-              style={{ width: '36px', height: '36px', display: 'none' }}
-            >
-              {theme === 'dark' ? <Moon size={17} color="#38bdf8" /> : theme === 'light' ? <Sun size={17} color="#f59e0b" /> : <Sparkles size={17} color="#ec4899" />}
-            </button>
+            {/* Theme Selector (Night / Light / Pink) */}
+            <div className="theme-segmented-control navbar-theme-control" role="group" aria-label="Appearance Theme Selector">
+              <button
+                type="button"
+                className={`theme-segmented-btn navbar-theme-btn ${theme === 'dark' ? 'active-dark' : ''}`}
+                onClick={() => setTheme('dark')}
+                title="Night Mode (Dark Slate)"
+                aria-label="Night Mode"
+              >
+                <Moon size={13} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+                <span className="navbar-theme-label">Night</span>
+              </button>
+
+              <button
+                type="button"
+                className={`theme-segmented-btn navbar-theme-btn ${theme === 'light' ? 'active-light' : ''}`}
+                onClick={() => setTheme('light')}
+                title="Light Mode (Clean Daylight)"
+                aria-label="Light Mode"
+              >
+                <Sun size={13} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+                <span className="navbar-theme-label">Light</span>
+              </button>
+
+              <button
+                type="button"
+                className={`theme-segmented-btn navbar-theme-btn ${theme === 'pink' ? 'active-pink' : ''}`}
+                onClick={() => setTheme('pink')}
+                title="Pink Mode (Sakura Rose Glow)"
+                aria-label="Pink Mode"
+              >
+                <Sparkles size={13} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
+                <span className="navbar-theme-label">Pink</span>
+              </button>
+            </div>
 
             {/* Cart Trigger */}
             <button 
@@ -332,33 +359,81 @@ export const Navbar: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Theme Mode Toggle Inside Dropdown (Frees Navbar Space!) */}
-                    <button
-                      onClick={() => {
-                        toggleTheme();
-                        setIsUserDropdownOpen(false);
-                      }}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between',
-                        padding: '0.6rem 0.75rem', 
-                        borderRadius: 'var(--radius-sm)', 
-                        fontSize: '0.88rem', 
-                        color: 'var(--text-primary)', 
-                        textAlign: 'left', 
-                        width: '100%',
-                        background: 'var(--bg-input)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        {theme === 'dark' ? <Moon size={16} color="#38bdf8" /> : theme === 'light' ? <Sun size={16} color="#f59e0b" /> : <Sparkles size={16} color="#ec4899" />}
-                        <span>{theme === 'dark' ? 'Dark Theme (Night)' : theme === 'light' ? 'Light Theme (Day)' : 'Rose Pink Theme'}</span>
+                    {/* Theme Mode Selector Inside Dropdown */}
+                    <div style={{ padding: '0.5rem 0.65rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>Appearance Theme</span>
+                        <span className="badge badge-slate" style={{ fontSize: '0.68rem', textTransform: 'capitalize' }}>{theme}</span>
                       </div>
-                      <span className="badge badge-slate" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>
-                        {theme}
-                      </span>
-                    </button>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => { setTheme('dark'); setIsUserDropdownOpen(false); }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '0.4rem 0.2rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: theme === 'dark' ? '1.5px solid #38bdf8' : '1px solid var(--border-subtle)',
+                            background: theme === 'dark' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                            color: theme === 'dark' ? '#38bdf8' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.72rem',
+                            fontWeight: 600
+                          }}
+                          title="Night Mode"
+                        >
+                          <Moon size={14} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
+                          <span>Night</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setTheme('light'); setIsUserDropdownOpen(false); }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '0.4rem 0.2rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: theme === 'light' ? '1.5px solid #f59e0b' : '1px solid var(--border-subtle)',
+                            background: theme === 'light' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                            color: theme === 'light' ? '#d97706' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.72rem',
+                            fontWeight: 600
+                          }}
+                          title="Light Mode"
+                        >
+                          <Sun size={14} color={theme === 'light' ? '#d97706' : 'currentColor'} />
+                          <span>Light</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setTheme('pink'); setIsUserDropdownOpen(false); }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '0.4rem 0.2rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: theme === 'pink' ? '1.5px solid #ec4899' : '1px solid var(--border-subtle)',
+                            background: theme === 'pink' ? 'rgba(236, 72, 153, 0.15)' : 'transparent',
+                            color: theme === 'pink' ? '#ec4899' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontSize: '0.72rem',
+                            fontWeight: 600
+                          }}
+                          title="Pink Mode"
+                        >
+                          <Sparkles size={14} color={theme === 'pink' ? '#ec4899' : 'currentColor'} />
+                          <span>Pink</span>
+                        </button>
+                      </div>
+                    </div>
 
                     {/* Install App Trigger */}
                     <button

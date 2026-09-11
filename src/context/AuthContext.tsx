@@ -331,6 +331,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: new Error('Please enter a valid University / Staff ID Number.') };
       }
 
+      // Enforce 9-digit ID and strict [ID]@student.green.ac.bd email match for Student registration
+      if (role === 'student') {
+        if (!/^\d{9}$/.test(idNoClean)) {
+          return { error: new Error(`Student ID must be exactly 9 numeric digits (e.g. 232002038). Currently entered ${idNoClean.length} digits.`) };
+        }
+        const expectedStudentEmail = `${idNoClean}@student.green.ac.bd`;
+        if (emailClean !== expectedStudentEmail) {
+          return { error: new Error(`Student registration requires official email strictly matching your 9-digit ID (${expectedStudentEmail}). You cannot register with "${emailClean}".`) };
+        }
+      }
+
       const finalDepartment = role === 'conductor' ? 'Transport & Fleet Division' : department;
 
       // 1. Check if University ID Number is already registered in Supabase
