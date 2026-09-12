@@ -50,9 +50,15 @@ export const Login: React.FC = () => {
   const tabSignInRef = useRef<HTMLButtonElement>(null);
   const tabRegisterRef = useRef<HTMLButtonElement>(null);
 
-  // Keyboard navigation: ArrowDown / ArrowUp moves through all form fields
+  // Keyboard navigation: ArrowDown / ArrowUp moves through all form fields, ArrowLeft / ArrowRight for select
   const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') {
+    if (
+      e.key !== 'ArrowDown' &&
+      e.key !== 'ArrowUp' &&
+      e.key !== 'Enter' &&
+      e.key !== 'ArrowRight' &&
+      e.key !== 'ArrowLeft'
+    ) {
       return;
     }
 
