@@ -123,11 +123,8 @@ export const ConductorDashboard: React.FC = () => {
       <div className="page-header page-header-row">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem' }}>
-            <span className="badge badge-amber" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <BusIcon size={12} /> Bus Conductor & Transit Staff Portal
-            </span>
-            <span style={{ fontSize: '0.82rem', color: 'var(--gub-green-light)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Zap size={13} /> Real-Time Cross-Device Sync Active
+            <span className={profile?.is_demo ? "badge badge-amber" : "badge badge-emerald"} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem' }}>
+              <Zap size={13} /> {profile?.is_demo ? (language === 'bn' ? '🧪 ডেমো বাস বহর সিঙ্ক সক্রিয়' : '🧪 Demo Fleet Sync Active') : (language === 'bn' ? '🏛️ রিয়েল বাস বহর সিঙ্ক সক্রিয়' : '🏛️ Live Campus Fleet Sync Active')}
             </span>
           </div>
           <h1 className="page-title">Passenger Seat Verification & Dispatch Desk</h1>

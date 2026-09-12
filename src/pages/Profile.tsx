@@ -16,12 +16,17 @@ import {
   Clock,
   Sparkles,
   Lock,
-  Camera
+  Camera,
+  Palette,
+  Moon,
+  Sun,
+  Globe,
+  Check
 } from 'lucide-react';
 
 export const Profile: React.FC = () => {
   const { profile } = useAuth();
-  const { setIsProfileModalOpen } = useApp();
+  const { theme, setTheme, language, setLanguage, setIsProfileModalOpen } = useApp();
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -158,6 +163,119 @@ export const Profile: React.FC = () => {
         <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
           {profile?.bio || 'Undergraduate student in the Department of Computer Science & Engineering at Green University of Bangladesh.'}
         </p>
+      </div>
+
+      {/* Theme Appearance & Language Preferences Card */}
+      <div className="glass-card" style={{ padding: '1.75rem' }}>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Palette size={20} color="var(--gub-green)" /> {language === 'bn' ? 'থিম ও ইন্টারফেস পছন্দ' : 'Theme & Interface Preferences'}
+        </h3>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+          {language === 'bn' ? 'আপনার অ্যাকাউন্টের জন্য প্রিয় কালার থিম ও ভাষা নির্বাচন করুন।' : 'Choose your preferred visual theme and system language for your session.'}
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {/* Night Mode */}
+          <div
+            onClick={() => setTheme('dark')}
+            className="glass-card glass-card-interactive"
+            style={{
+              padding: '1rem',
+              cursor: 'pointer',
+              border: theme === 'dark' ? '2px solid #38bdf8' : '1px solid var(--border-subtle)',
+              background: theme === 'dark' ? 'rgba(56, 189, 248, 0.12)' : 'var(--bg-input)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <Moon size={20} color="#38bdf8" />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{language === 'bn' ? 'নাইট মোড' : 'Night Mode'}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Dark Slate Aesthetic</div>
+              </div>
+            </div>
+            {theme === 'dark' && <Check size={18} color="#38bdf8" />}
+          </div>
+
+          {/* Light Mode */}
+          <div
+            onClick={() => setTheme('light')}
+            className="glass-card glass-card-interactive"
+            style={{
+              padding: '1rem',
+              cursor: 'pointer',
+              border: theme === 'light' ? '2px solid #f59e0b' : '1px solid var(--border-subtle)',
+              background: theme === 'light' ? 'rgba(245, 158, 11, 0.12)' : 'var(--bg-input)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <Sun size={20} color="#f59e0b" />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{language === 'bn' ? 'লাইট মোড' : 'Light Mode'}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clean Daylight</div>
+              </div>
+            </div>
+            {theme === 'light' && <Check size={18} color="#f59e0b" />}
+          </div>
+
+          {/* Pink Mode */}
+          <div
+            onClick={() => setTheme('pink')}
+            className="glass-card glass-card-interactive"
+            style={{
+              padding: '1rem',
+              cursor: 'pointer',
+              border: theme === 'pink' ? '2px solid #ec4899' : '1px solid var(--border-subtle)',
+              background: theme === 'pink' ? 'rgba(236, 72, 153, 0.12)' : 'var(--bg-input)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <Sparkles size={20} color="#ec4899" />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{language === 'bn' ? 'গোলাপী মোড' : 'Pink Mode'}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sakura Rose Glow</div>
+              </div>
+            </div>
+            {theme === 'pink' && <Check size={18} color="#ec4899" />}
+          </div>
+        </div>
+
+        {/* Language Selection Row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Globe size={18} color="var(--gub-green)" />
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{language === 'bn' ? 'পোর্টাল ভাষা নির্বাচন:' : 'Portal Language:'}</span>
+          </div>
+          <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setLanguage('bn')}
+              className={`btn btn-sm ${language === 'bn' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
+            >
+              বাংলা (Bengali)
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`btn btn-sm ${language === 'en' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
+            >
+              English
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

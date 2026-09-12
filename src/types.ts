@@ -15,6 +15,7 @@ export interface UserProfile {
   father_name?: string;
   mother_name?: string;
   blood_group?: string;
+  is_demo?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -28,6 +29,7 @@ export interface Notice {
   date: string;
   category: NoticeCategory;
   author?: string;
+  is_demo?: boolean;
   created_at?: string;
 }
 
@@ -63,11 +65,9 @@ export interface BusSeatBooking {
   booking_date: string; // YYYY-MM-DD
   status?: BookingStatus; // 'pending' | 'confirmed' | 'rejected'
   conductor_notes?: string;
+  is_demo?: boolean;
   created_at?: string;
 }
-
-
-
 
 export type FoodCategory = 'breakfast' | 'lunch' | 'snacks' | 'beverage';
 
@@ -80,6 +80,7 @@ export interface FoodItem {
   is_available: boolean;
   image: string;
   rating: number;
+  is_demo?: boolean;
   created_at?: string;
 }
 
@@ -102,6 +103,7 @@ export interface LostFoundItem {
   contact_name: string;
   contact_phone: string;
   reported_by: string;
+  is_demo?: boolean;
   created_at?: string;
 }
 
@@ -119,6 +121,7 @@ export interface Complaint {
   reported_by: string;
   reported_by_email: string;
   admin_feedback?: string | null;
+  is_demo?: boolean;
   created_at?: string;
 }
 
@@ -139,6 +142,7 @@ export interface Order {
   status: OrderStatus;
   ordered_by: string;
   date: string;
+  is_demo?: boolean;
   created_at?: string;
 }
 

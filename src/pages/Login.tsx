@@ -836,9 +836,12 @@ export const Login: React.FC = () => {
 
           {mode === 'login' && (
             <div className="login-demo-box" style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-              <span className="login-demo-title" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.65rem' }}>
+              <span className="login-demo-title" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>
                 {t.demoTitle}
               </span>
+              <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.4, margin: '0 auto 0.75rem auto', maxWidth: '440px' }}>
+                {t.demoSubtitle}
+              </p>
               <div className="login-demo-buttons" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
                   type="button"

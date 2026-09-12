@@ -40,11 +40,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('email', emailLower)
         .maybeSingle();
 
+      const isDemoAccount = 
+        emailLower === 'student@green.edu.bd' ||
+        emailLower === 'teacher@green.edu.bd' ||
+        emailLower === 'admin@green.edu.bd' ||
+        emailLower === 'conductor@green.edu.bd' ||
+        Boolean(data?.is_demo) ||
+        Boolean(authUser?.user_metadata?.is_demo);
+
       if (data && !error) {
         const resolvedAvatar = getResolvedAvatar(emailLower, data.avatar);
         const resolvedProfile: UserProfile = {
           ...data,
           avatar: resolvedAvatar,
+          is_demo: data.is_demo !== undefined ? Boolean(data.is_demo) : isDemoAccount,
         };
         setProfile(resolvedProfile);
         localStorage.setItem('gub_user', JSON.stringify(resolvedProfile));
@@ -80,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         semester: role === 'conductor' ? 'Fleet Staff' : 'Spring 2026',
         avatar: getResolvedAvatar(emailLower, rawMeta.avatar),
         bio: `${role === 'teacher' ? 'Faculty Member' : role === 'admin' ? 'Administrator' : role === 'conductor' ? 'Bus Conductor & Transit In-Charge' : 'Student'} at Green University of Bangladesh`,
+        is_demo: isDemoAccount,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -209,6 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bio: 'Student at Green University of Bangladesh | Department of CSE',
             blood_group: 'B+',
             phone: '01712345678',
+            is_demo: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -233,6 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             blood_group: 'O+',
             phone: '01899887766',
             office_hours: 'Sun & Tue: 10:00 AM - 1:00 PM',
+            is_demo: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -256,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bio: 'Central System Administrator at Green University of Bangladesh',
             blood_group: 'A+',
             phone: '01911223344',
+            is_demo: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -279,6 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bio: 'Bus Conductor & Transit In-Charge at Green University of Bangladesh',
             blood_group: 'B+',
             phone: '01700112233',
+            is_demo: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -305,6 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             semester: determinedRole === 'conductor' ? 'Staff' : 'Spring 2026',
             avatar: getResolvedAvatar(emailClean, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'),
             bio: `${determinedRole.toUpperCase()} at Green University of Bangladesh`,
+            is_demo: emailClean.includes('demo') || emailClean.endsWith('@green.edu.bd'),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -435,7 +450,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role,
             department: finalDepartment,
             id_no: idNoClean,
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+            is_demo: false
           }
         }
       });
@@ -484,6 +500,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           semester: role === 'conductor' ? 'Staff' : 'Spring 2026',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
           bio: `${role === 'teacher' ? 'Faculty Member' : role === 'admin' ? 'Administrator' : role === 'conductor' ? 'Bus Conductor & Transit Staff' : 'Student'} at Green University of Bangladesh`,
+          is_demo: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };

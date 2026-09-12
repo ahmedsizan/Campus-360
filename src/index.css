@@ -958,7 +958,7 @@ body.pink-theme input:-webkit-autofill:active {
   padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991px) {
   .mobile-bottom-nav {
     display: flex;
     align-items: center;

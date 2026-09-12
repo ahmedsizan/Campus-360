@@ -75,7 +75,8 @@ export const translations = {
     btnPleaseWait: 'Please wait...',
 
     // Demo Logins
-    demoTitle: 'Quick 1-Tap Tablet Demo Login',
+    demoTitle: 'Quick 1-Tap Demo Sandbox Login',
+    demoSubtitle: '🧪 Isolated Sandbox: Demo requests, bus passes, and notices stay strictly inside the Demo environment and never touch real accounts.',
     demoStudent: 'Student Demo',
     demoTeacher: 'Teacher Demo',
     demoAdmin: 'Admin Demo',
@@ -222,7 +223,8 @@ export const translations = {
     btnPleaseWait: 'অনুগ্রহ করে অপেক্ষা করুন...',
 
     // Demo Logins
-    demoTitle: 'দ্রুত ১-ট্যাপ ডেমো লগইন',
+    demoTitle: 'দ্রুত ১-ট্যাপ ডেমো স্যান্ডবক্স লগইন',
+    demoSubtitle: '🧪 আইসোলেটেড স্যান্ডবক্স: ডেমো টিকিট রিকোয়েস্ট ও নোটিশ শুধুমাত্র ডেমো অ্যাকাউন্টে সীমাবদ্ধ থাকবে, রিয়েল অ্যাকাউন্টে যাবে না।',
     demoStudent: 'শিক্ষার্থী ডেমো',
     demoTeacher: 'শিক্ষক ডেমো',
     demoAdmin: 'প্রশাসক ডেমো',

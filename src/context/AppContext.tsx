@@ -215,32 +215,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loadingNotices, setLoadingNotices] = useState(true);
 
   const fetchNotices = async () => {
+    const isDemo = Boolean(profile?.is_demo);
     try {
       const { data, error } = await supabase
         .from('notices')
         .select('*')
+        .eq('is_demo', isDemo)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('Supabase fetch notices query notice:', error.message);
-        setNotices(FALLBACK_NOTICES);
+        setNotices(isDemo ? FALLBACK_NOTICES.map(n => ({ ...n, is_demo: true })) : []);
       } else if (data && data.length > 0) {
         setNotices(data as Notice[]);
       } else {
-        setNotices(FALLBACK_NOTICES);
+        setNotices(isDemo ? FALLBACK_NOTICES.map(n => ({ ...n, is_demo: true })) : []);
       }
     } catch {
-      setNotices(FALLBACK_NOTICES);
+      setNotices(isDemo ? FALLBACK_NOTICES.map(n => ({ ...n, is_demo: true })) : []);
     } finally {
       setLoadingNotices(false);
     }
   };
 
   const addNotice = async (newNotice: Omit<Notice, 'id' | 'created_at'>): Promise<boolean> => {
+    const isDemo = Boolean(profile?.is_demo);
     const id = `n-${Date.now()}`;
     const noticeObj: Notice = {
       ...newNotice,
       id,
+      is_demo: isDemo,
       created_at: new Date().toISOString()
     };
 
@@ -333,25 +337,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // ==========================================
   // 2.5 Bus Seat Bookings (Cloud Supabase + Realtime Cross-Device Sync)
+  // Partitioned by is_demo (Demo Sandbox vs Real Live Passenger Bookings)
   // ==========================================
+  const getBookingStorageKey = (isDemoAccount?: boolean) => {
+    return isDemoAccount ? 'gub_bus_seat_bookings_demo' : 'gub_bus_seat_bookings_real';
+  };
+
   const [seatBookings, setSeatBookings] = useState<BusSeatBooking[]>(() => {
     try {
-      const saved = localStorage.getItem('gub_bus_seat_bookings');
-      return saved ? JSON.parse(saved) : FALLBACK_SEAT_BOOKINGS;
+      const isDemoAccount = Boolean(profile?.is_demo);
+      const saved = localStorage.getItem(getBookingStorageKey(isDemoAccount));
+      if (saved) return JSON.parse(saved);
+      return isDemoAccount ? FALLBACK_SEAT_BOOKINGS.map(b => ({ ...b, is_demo: true })) : [];
     } catch {
-      return FALLBACK_SEAT_BOOKINGS;
+      return Boolean(profile?.is_demo) ? FALLBACK_SEAT_BOOKINGS.map(b => ({ ...b, is_demo: true })) : [];
     }
   });
   const [loadingSeatBookings, setLoadingSeatBookings] = useState(true);
 
-  // Sync to localStorage
+  // Sync to localStorage with partitioned key
   useEffect(() => {
     try {
-      localStorage.setItem('gub_bus_seat_bookings', JSON.stringify(seatBookings));
+      const isDemoAccount = Boolean(profile?.is_demo);
+      localStorage.setItem(getBookingStorageKey(isDemoAccount), JSON.stringify(seatBookings));
     } catch (e) {
       console.warn('Failed to persist seat bookings to localStorage', e);
     }
-  }, [seatBookings]);
+  }, [seatBookings, profile?.is_demo]);
 
   // Two-Way Sync Engine: Merge cloud data with local data and backfill unsaved local data to cloud
   const syncLocalBookingsToCloud = async (bookingsToSync: BusSeatBooking[]) => {
@@ -364,17 +376,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const fetchSeatBookings = async () => {
+    const isDemo = Boolean(profile?.is_demo);
     try {
       const { data, error } = await supabase
         .from('bus_seat_bookings')
         .select('*')
+        .eq('is_demo', isDemo)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
         setSeatBookings(prev => {
           const bookingMap = new Map<string, BusSeatBooking>();
-          // 1. Load local cache
-          prev.forEach(b => {
+          // 1. Load local cache matching current environment
+          prev.filter(b => Boolean(b.is_demo) === isDemo).forEach(b => {
             if (b.id) bookingMap.set(b.id, b);
           });
           // 2. Overwrite with fresh cloud data
@@ -390,13 +404,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
           // Check if there are local bookings that were not in cloud
           const cloudIds = new Set((data as BusSeatBooking[]).map(b => b.id));
-          const missingInCloud = prev.filter(b => !cloudIds.has(b.id));
+          const missingInCloud = prev.filter(b => Boolean(b.is_demo) === isDemo && !cloudIds.has(b.id));
           if (missingInCloud.length > 0) {
             syncLocalBookingsToCloud(missingInCloud);
           }
 
           try {
-            localStorage.setItem('gub_bus_seat_bookings', JSON.stringify(merged));
+            localStorage.setItem(getBookingStorageKey(isDemo), JSON.stringify(merged));
           } catch {}
           return merged;
         });
@@ -412,6 +426,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Real-time synchronization (Cross-Device Supabase Channel + BroadcastChannel + Postgres Changes)
   useEffect(() => {
+    const currentIsDemo = Boolean(profile?.is_demo);
+
     // 1. Local same-device BroadcastChannel
     let localBc: BroadcastChannel | null = null;
     try {
@@ -420,8 +436,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const data = event.data;
         if (!data) return;
 
+        // Multi-tenant check: discard if message belongs to the other environment
+        if (data.is_demo !== undefined && Boolean(data.is_demo) !== currentIsDemo) {
+          return;
+        }
+
         if (data.type === 'NEW_BOOKING' && data.booking) {
           const incoming = data.booking as BusSeatBooking;
+          if (Boolean(incoming.is_demo) !== currentIsDemo) return;
+
           setSeatBookings(prev => {
             if (prev.some(b => b.id === incoming.id || (b.token_id && b.token_id === incoming.token_id))) return prev;
             return [incoming, ...prev];
@@ -457,6 +480,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .on('broadcast', { event: 'NEW_BOOKING' }, ({ payload }) => {
         if (!payload) return;
         const incoming = payload as BusSeatBooking;
+        if (Boolean(incoming.is_demo) !== currentIsDemo) return;
+
         setSeatBookings(prev => {
           if (prev.some(b => b.id === incoming.id || (b.token_id && b.token_id === incoming.token_id))) return prev;
           return [incoming, ...prev];
@@ -469,6 +494,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
       .on('broadcast', { event: 'STATUS_UPDATE' }, ({ payload }) => {
         if (!payload) return;
+        if (payload.is_demo !== undefined && Boolean(payload.is_demo) !== currentIsDemo) return;
         const { bookingId, token_id, status, notes } = payload;
         setSeatBookings(prev =>
           prev.map(b => (b.id === bookingId || (b.token_id && b.token_id === token_id) ? { ...b, status, conductor_notes: notes } : b))
@@ -479,18 +505,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
       .on('broadcast', { event: 'CANCEL_BOOKING' }, ({ payload }) => {
         if (!payload) return;
+        if (payload.is_demo !== undefined && Boolean(payload.is_demo) !== currentIsDemo) return;
         const { bookingId } = payload;
         setSeatBookings(prev => prev.filter(b => b.id !== bookingId));
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bus_seat_bookings' }, (payload) => {
         if (payload.eventType === 'INSERT') {
           const newBooking = payload.new as BusSeatBooking;
+          if (Boolean(newBooking.is_demo) !== currentIsDemo) return;
           setSeatBookings(prev => {
             if (prev.some(b => b.id === newBooking.id || (b.token_id && b.token_id === newBooking.token_id))) return prev;
             return [newBooking, ...prev];
           });
         } else if (payload.eventType === 'UPDATE') {
           const updatedBooking = payload.new as BusSeatBooking;
+          if (Boolean(updatedBooking.is_demo) !== currentIsDemo) return;
           setSeatBookings(prev =>
             prev.map(b => (b.id === updatedBooking.id ? updatedBooking : b))
           );
@@ -502,8 +531,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .subscribe();
 
     // 3. Cross-tab storage event listener
+    const storageKey = getBookingStorageKey(currentIsDemo);
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'gub_bus_seat_bookings' && e.newValue) {
+      if (e.key === storageKey && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue);
           setSeatBookings(parsed);
@@ -530,12 +560,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       clearInterval(syncInterval);
       supabase.removeChannel(crossDeviceChannel);
     };
-  }, []);
+  }, [profile?.is_demo, profile?.email]);
 
   const bookSeat = async (
     bookingData: Omit<BusSeatBooking, 'id' | 'created_at'>
   ): Promise<{ success: boolean; message?: string; booking?: BusSeatBooking }> => {
-    // Check if seat is already occupied for this specific bus, trip slot, and direction on the same booking date
+    const isDemo = Boolean(profile?.is_demo);
+    // Check if seat is already occupied for this specific bus, trip slot, and direction on the same booking date in the active environment
     const isOccupied = seatBookings.some(
       b =>
         b.bus_id === bookingData.bus_id &&
@@ -543,7 +574,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         b.direction === bookingData.direction &&
         b.seat_number === bookingData.seat_number &&
         b.booking_date === bookingData.booking_date &&
-        b.status !== 'rejected'
+        b.status !== 'rejected' &&
+        Boolean(b.is_demo) === isDemo
     );
 
     if (isOccupied) {
@@ -559,19 +591,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...bookingData,
       token_id: generatedToken,
       id: bookingId,
+      is_demo: isDemo,
       created_at: new Date().toISOString()
     };
 
     // Optimistically update state and localStorage
     setSeatBookings(prev => [fullBooking, ...prev]);
 
-    // 1. Cross-Device Supabase Broadcast (works on phones, laptops, and tablets)
+    // 1. Cross-Device Supabase Broadcast
     try {
       const channel = supabase.channel('gub_bus_live_network');
       channel.send({
         type: 'broadcast',
         event: 'NEW_BOOKING',
-        payload: fullBooking
+        payload: { ...fullBooking, is_demo: isDemo }
       });
     } catch (e) {
       console.warn('Supabase cross-device broadcast error:', e);
@@ -580,7 +613,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 2. Same-Device BroadcastChannel
     try {
       const bc = new BroadcastChannel('gub_bus_realtime_channel');
-      bc.postMessage({ type: 'NEW_BOOKING', booking: fullBooking });
+      bc.postMessage({ type: 'NEW_BOOKING', booking: fullBooking, is_demo: isDemo });
       bc.close();
     } catch {}
 
@@ -599,7 +632,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {
       addToast(
         'info',
-        `Seat #${fullBooking.seat_number} request sent to Bus Conductor! Token: ${fullBooking.token_id}`,
+        `Seat #${fullBooking.seat_number} request saved. Token: ${fullBooking.token_id}`,
         'Request Submitted'
       );
       return { success: true, booking: fullBooking };
@@ -611,6 +644,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     status: 'pending' | 'confirmed' | 'rejected',
     notes?: string
   ): Promise<boolean> => {
+    const isDemo = Boolean(profile?.is_demo);
     let updatedBookingObj: BusSeatBooking | undefined;
 
     setSeatBookings(prev =>
@@ -633,7 +667,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           bookingId,
           token_id: updatedBookingObj?.token_id,
           status,
-          notes
+          notes,
+          is_demo: isDemo
         }
       });
     } catch (e) {
@@ -648,7 +683,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         bookingId, 
         token_id: updatedBookingObj?.token_id, 
         status, 
-        notes 
+        notes,
+        is_demo: isDemo
       });
       bc.close();
     } catch {}
@@ -676,6 +712,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const cancelSeatBooking = async (id: string): Promise<boolean> => {
+    const isDemo = Boolean(profile?.is_demo);
     setSeatBookings(prev => prev.filter(b => b.id !== id));
 
     // 1. Cross-Device Supabase Broadcast
@@ -684,14 +721,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       channel.send({
         type: 'broadcast',
         event: 'CANCEL_BOOKING',
-        payload: { bookingId: id }
+        payload: { bookingId: id, is_demo: isDemo }
       });
     } catch {}
 
     // 2. Same-Device BroadcastChannel
     try {
       const bc = new BroadcastChannel('gub_bus_realtime_channel');
-      bc.postMessage({ type: 'CANCEL_BOOKING', bookingId: id });
+      bc.postMessage({ type: 'CANCEL_BOOKING', bookingId: id, is_demo: isDemo });
       bc.close();
     } catch {}
 
@@ -743,8 +780,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const fetchOrders = async () => {
+    const isDemo = Boolean(profile?.is_demo);
     try {
-      let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+      let query = supabase.from('orders').select('*').eq('is_demo', isDemo).order('created_at', { ascending: false });
       if (profile?.role !== 'admin' && profile?.email) {
         query = query.eq('ordered_by', profile.email);
       }
@@ -795,6 +833,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const checkoutCart = async (): Promise<boolean> => {
     if (cart.length === 0) return false;
 
+    const isDemo = Boolean(profile?.is_demo);
     const orderId = `GUB-CAF-${Math.floor(1000 + Math.random() * 9000)}`;
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
@@ -807,8 +846,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })),
       total_price: cartTotal,
       status: 'pending',
-      ordered_by: profile?.email || 'student@green.edu.bd',
+      ordered_by: profile?.email || (isDemo ? 'student@green.edu.bd' : 'student@student.green.ac.bd'),
       date: new Date().toISOString().split('T')[0],
+      is_demo: isDemo,
       created_at: new Date().toISOString()
     };
 
@@ -838,31 +878,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loadingLostFound, setLoadingLostFound] = useState(true);
 
   const fetchLostFound = async () => {
+    const isDemo = Boolean(profile?.is_demo);
     try {
       const { data, error } = await supabase
         .from('lost_found_items')
         .select('*')
+        .eq('is_demo', isDemo)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('Supabase fetch lost_found notice:', error.message);
-        setLostFoundItems(FALLBACK_LOST_FOUND);
+        setLostFoundItems(isDemo ? FALLBACK_LOST_FOUND.map(l => ({ ...l, is_demo: true })) : []);
       } else if (data && data.length > 0) {
         setLostFoundItems(data as LostFoundItem[]);
       } else {
-        setLostFoundItems(FALLBACK_LOST_FOUND);
+        setLostFoundItems(isDemo ? FALLBACK_LOST_FOUND.map(l => ({ ...l, is_demo: true })) : []);
       }
     } catch {
-      setLostFoundItems(FALLBACK_LOST_FOUND);
+      setLostFoundItems(isDemo ? FALLBACK_LOST_FOUND.map(l => ({ ...l, is_demo: true })) : []);
     } finally {
       setLoadingLostFound(false);
     }
   };
 
   const reportLostFound = async (item: Omit<LostFoundItem, 'id' | 'created_at'>): Promise<boolean> => {
+    const isDemo = Boolean(profile?.is_demo);
     const newItem: LostFoundItem = {
       ...item,
       id: `lf-${Date.now()}`,
+      is_demo: isDemo,
       created_at: new Date().toISOString()
     };
 
@@ -892,22 +936,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loadingComplaints, setLoadingComplaints] = useState(true);
 
   const fetchComplaints = async () => {
+    const isDemo = Boolean(profile?.is_demo);
     try {
       const { data, error } = await supabase
         .from('complaints')
         .select('*')
+        .eq('is_demo', isDemo)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('Supabase fetch complaints notice:', error.message);
-        setComplaints(FALLBACK_COMPLAINTS);
+        setComplaints(isDemo ? FALLBACK_COMPLAINTS.map(c => ({ ...c, is_demo: true })) : []);
       } else if (data && data.length > 0) {
         setComplaints(data as Complaint[]);
       } else {
-        setComplaints(FALLBACK_COMPLAINTS);
+        setComplaints(isDemo ? FALLBACK_COMPLAINTS.map(c => ({ ...c, is_demo: true })) : []);
       }
     } catch {
-      setComplaints(FALLBACK_COMPLAINTS);
+      setComplaints(isDemo ? FALLBACK_COMPLAINTS.map(c => ({ ...c, is_demo: true })) : []);
     } finally {
       setLoadingComplaints(false);
     }
@@ -916,10 +962,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const submitComplaint = async (
     newComplaint: Omit<Complaint, 'id' | 'created_at' | 'admin_feedback'>
   ): Promise<boolean> => {
+    const isDemo = Boolean(profile?.is_demo);
     const compObj: Complaint = {
       ...newComplaint,
       id: `c-${Date.now()}`,
       admin_feedback: null,
+      is_demo: isDemo,
       created_at: new Date().toISOString()
     };
 
@@ -1027,7 +1075,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       supabase.removeChannel(complaintsChannel);
       supabase.removeChannel(lostFoundChannel);
     };
-  }, []);
+  }, [profile?.is_demo, profile?.email]);
 
   return (
     <AppContext.Provider

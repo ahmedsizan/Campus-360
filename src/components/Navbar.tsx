@@ -74,6 +74,51 @@ export const Navbar: React.FC = () => {
     return <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>{t.roleStudentShort}</span>;
   };
 
+  const getEnvBadge = () => {
+    if (profile?.is_demo) {
+      return (
+        <span 
+          className="badge" 
+          title="Demo Sandbox Environment: All data is isolated from real accounts"
+          style={{ 
+            fontSize: '0.62rem', 
+            padding: '0.12rem 0.45rem', 
+            background: 'rgba(245, 158, 11, 0.15)', 
+            color: '#f59e0b', 
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            fontWeight: 700,
+            borderRadius: '9999px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '3px'
+          }}
+        >
+          🧪 {language === 'bn' ? 'ডেমো' : 'Demo'}
+        </span>
+      );
+    }
+    return (
+      <span 
+        className="badge" 
+        title="Official GUB Live Environment"
+        style={{ 
+          fontSize: '0.62rem', 
+          padding: '0.12rem 0.45rem', 
+          background: 'rgba(16, 185, 129, 0.15)', 
+          color: '#10b981', 
+          border: '1px solid rgba(16, 185, 129, 0.35)',
+          fontWeight: 700,
+          borderRadius: '9999px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '3px'
+        }}
+      >
+        🏛️ {language === 'bn' ? 'লাইভ' : 'Live'}
+      </span>
+    );
+  };
+
   return (
     <>
       <nav style={{
@@ -131,11 +176,10 @@ export const Navbar: React.FC = () => {
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
                 Campus<span style={{ color: 'var(--gub-green)' }}>360</span>
               </span>
-              {getRoleBadge()}
             </div>
           </div>
 
-          {/* Desktop Navigation Links (Hidden on Mobile/Tablet) */}
+          {/* Desktop Navigation Links (Visible on Laptop/Desktop Screens >= 992px) */}
           <div style={{ display: 'none', alignItems: 'center', gap: '0.25rem' }} className="desktop-nav">
             {navItems.map(item => {
               const isActive = activeTab === item.id;
@@ -164,88 +208,8 @@ export const Navbar: React.FC = () => {
             })}
           </div>
 
-          {/* Right Controls - Ultra Compact */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-            {/* Desktop Only: Dedicated Install & Theme Buttons */}
-            <button 
-              className="btn btn-outline btn-sm desktop-only-control" 
-              onClick={triggerInstallApp}
-              aria-label="Install Campus 360 App"
-              style={{
-                borderColor: 'var(--gub-green)',
-                color: 'var(--gub-green)',
-                background: 'rgba(16, 185, 129, 0.08)',
-                gap: '0.35rem',
-                borderRadius: 'var(--radius-full)',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                display: 'none'
-              }}
-            >
-              <Download size={14} color="var(--gub-green)" />
-              <span>Install App</span>
-            </button>
-
-            {/* Language Switcher (বাংলা | English) */}
-            <div className="lang-segmented-control navbar-lang-control" role="group" aria-label="Language Selector">
-              <button
-                type="button"
-                className={`lang-segmented-btn navbar-lang-btn ${language === 'bn' ? 'active' : ''}`}
-                onClick={() => setLanguage('bn')}
-                title="বাংলা"
-                aria-label="বাংলা ভাষা"
-              >
-                <Globe size={13} />
-                <span>বাংলা</span>
-              </button>
-              <button
-                type="button"
-                className={`lang-segmented-btn navbar-lang-btn ${language === 'en' ? 'active' : ''}`}
-                onClick={() => setLanguage('en')}
-                title="English"
-                aria-label="English Language"
-              >
-                <span>English</span>
-              </button>
-            </div>
-
-            {/* Theme Selector (Night / Light / Pink) */}
-            <div className="theme-segmented-control navbar-theme-control" role="group" aria-label="Appearance Theme Selector">
-              <button
-                type="button"
-                className={`theme-segmented-btn navbar-theme-btn ${theme === 'dark' ? 'active-dark' : ''}`}
-                onClick={() => setTheme('dark')}
-                title={language === 'bn' ? 'নাইট মোড' : 'Night Mode (Dark Slate)'}
-                aria-label="Night Mode"
-              >
-                <Moon size={13} color={theme === 'dark' ? '#38bdf8' : 'currentColor'} />
-                <span className="navbar-theme-label">{t.dashThemeNight}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`theme-segmented-btn navbar-theme-btn ${theme === 'light' ? 'active-light' : ''}`}
-                onClick={() => setTheme('light')}
-                title={language === 'bn' ? 'লাইট মোড' : 'Light Mode (Clean Daylight)'}
-                aria-label="Light Mode"
-              >
-                <Sun size={13} color={theme === 'light' ? '#d97706' : 'currentColor'} />
-                <span className="navbar-theme-label">{t.dashThemeLight}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`theme-segmented-btn navbar-theme-btn ${theme === 'pink' ? 'active-pink' : ''}`}
-                onClick={() => setTheme('pink')}
-                title={language === 'bn' ? 'গোলাপী মোড' : 'Pink Mode (Sakura Rose Glow)'}
-                aria-label="Pink Mode"
-              >
-                <Sparkles size={13} color={theme === 'pink' ? '#ffffff' : '#ec4899'} />
-                <span className="navbar-theme-label">{t.dashThemePink}</span>
-              </button>
-            </div>
-
+          {/* Right Controls - Clean & Minimal: Cart + User Profile Avatar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexShrink: 0 }}>
             {/* Cart Trigger */}
             <button 
               className="btn btn-secondary btn-icon" 
@@ -277,27 +241,7 @@ export const Navbar: React.FC = () => {
               )}
             </button>
 
-            {/* Dedicated Log In / Switch Account Button for Tablet & Mobile Header */}
-            <button 
-              className="btn btn-primary btn-sm"
-              onClick={() => signOut()}
-              title="Log In or Switch Account"
-              style={{
-                borderRadius: 'var(--radius-full)',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                flexShrink: 0
-              }}
-            >
-              <LogIn size={14} />
-              <span>Log In</span>
-            </button>
-
-            {/* User Profile & More Menu (Three-Dot & Avatar) */}
+            {/* User Profile & More Menu (Avatar & Dropdown with Logout) */}
             <div style={{ position: 'relative', flexShrink: 0, width: '38px', height: '38px' }}>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
@@ -379,8 +323,11 @@ export const Navbar: React.FC = () => {
                   }}>
                     {/* User info */}
                     <div style={{ padding: '0.45rem 0.65rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.25rem' }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {profile?.name}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {profile?.name}
+                        </div>
+                        {getEnvBadge()}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {profile?.email}
@@ -587,12 +534,9 @@ export const Navbar: React.FC = () => {
         </div>
 
         <style>{`
-          @media (min-width: 600px) {
+          @media (min-width: 992px) {
             .desktop-nav {
               display: flex !important;
-            }
-            .desktop-only-control {
-              display: inline-flex !important;
             }
           }
         `}</style>
