@@ -77,7 +77,8 @@ export const ConductorDashboard: React.FC = () => {
     return matchesLine && matchesStatus && matchesSearch;
   });
 
-  const pendingCount = seatBookings.filter(b => (!b.status || b.status === 'pending')).length;
+  const pendingBookings = seatBookings.filter(b => (!b.status || b.status === 'pending'));
+  const pendingCount = pendingBookings.length;
   const confirmedCount = seatBookings.filter(b => b.status === 'confirmed').length;
   const rejectedCount = seatBookings.filter(b => b.status === 'rejected').length;
 
@@ -216,9 +217,136 @@ export const ConductorDashboard: React.FC = () => {
             >
               <CheckCircle size={16} /> Verify & Accept
             </button>
-          </div>
-        </form>
       </div>
+      </form>
+      </div>
+
+      {/* Real-time Live Incoming Requests Action Banner */}
+      {pendingCount > 0 && (
+        <div style={{
+          padding: '1.25rem 1.5rem',
+          borderRadius: 'var(--radius-lg)',
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 100%)',
+          border: '2px solid rgba(245, 158, 11, 0.55)',
+          boxShadow: '0 8px 30px rgba(245, 158, 11, 0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: '#f59e0b',
+                boxShadow: '0 0 14px #f59e0b'
+              }} className="animate-pulse" />
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  ⚡ Real-Time Incoming Seat Requests ({pendingCount} Waiting)
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
+                  Students have booked seats in real time. Click "Accept Seat" to instantly approve and notify them!
+                </p>
+              </div>
+            </div>
+
+            {pendingCount > 1 && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleApproveAllPending}
+                style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', fontWeight: 800 }}
+              >
+                <CheckCircle size={15} /> Approve All {pendingCount} Pending
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
+            {pendingBookings.slice(0, 4).map(b => (
+              <div
+                key={b.id}
+                style={{
+                  background: 'var(--bg-surface)',
+                  padding: '1rem 1.15rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1.5px solid rgba(245, 158, 11, 0.45)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(245, 158, 11, 0.2)',
+                      border: '1.5px solid #f59e0b',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#f59e0b'
+                    }}>
+                      <span style={{ fontSize: '0.55rem', fontWeight: 800 }}>SEAT</span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 900, lineHeight: 1 }}>{b.seat_number}</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        {b.student_name}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                        ID: <strong style={{ color: 'var(--text-primary)' }}>{b.student_id}</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 800,
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    color: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.35)'
+                  }}>
+                    #{b.token_id || b.id.slice(0, 8)}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  <div><strong>Route:</strong> {b.bus_name} ({b.direction === 'to_campus' ? 'To Campus' : 'Return'})</div>
+                  <div><strong>Boarding:</strong> {b.stoppage} @ {b.stoppage_time || b.trip_slot}</div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => updateSeatBookingStatus(b.id, 'confirmed')}
+                    style={{ flex: 1, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', justifyContent: 'center', fontWeight: 800 }}
+                  >
+                    <CheckCircle size={14} /> Accept Seat
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => updateSeatBookingStatus(b.id, 'rejected')}
+                    style={{ color: 'var(--gub-rose)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                  >
+                    <XCircle size={14} /> Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.15rem' }}>

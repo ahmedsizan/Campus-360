@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { Bus, BusDirection, BusSeatBooking, BusStatus } from '../types';
-import { BoardingPassModal } from '../components/BoardingPassModal';
-import { GreenLine1Modal, GL1_INBOUND_TRIPS, GL1_OUTBOUND_TRIPS } from '../components/GreenLine1Modal';
-import { GreenLine2Modal, GL2_INBOUND_TRIPS, GL2_OUTBOUND_TRIPS } from '../components/GreenLine2Modal';
-import { GreenLine3Modal, GL3_INBOUND_TRIPS, GL3_OUTBOUND_TRIPS } from '../components/GreenLine3Modal';
-import { GreenLine4Modal, GL4_INBOUND_TRIPS, GL4_OUTBOUND_TRIPS } from '../components/GreenLine4Modal';
+import { TicketBookingTerminal } from '../components/TicketBookingTerminal';
+import { GL1_INBOUND_TRIPS, GL1_OUTBOUND_TRIPS } from '../components/GreenLine1Modal';
+import { GL2_INBOUND_TRIPS, GL2_OUTBOUND_TRIPS } from '../components/GreenLine2Modal';
+import { GL3_INBOUND_TRIPS, GL3_OUTBOUND_TRIPS } from '../components/GreenLine3Modal';
+import { GL4_INBOUND_TRIPS, GL4_OUTBOUND_TRIPS } from '../components/GreenLine4Modal';
 import { 
   Bus as BusIcon, 
   MapPin, 
@@ -51,15 +51,9 @@ export const Transport: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<'all' | BusStatus>('all');
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Modals for all 4 Green Lines
-  const [isGL1ModalOpen, setIsGL1ModalOpen] = useState(false);
-  const [isGL2ModalOpen, setIsGL2ModalOpen] = useState(false);
-  const [isGL3ModalOpen, setIsGL3ModalOpen] = useState(false);
-  const [isGL4ModalOpen, setIsGL4ModalOpen] = useState(false);
-
-  // Digital Boarding Pass Modal
-  const [activeBoardingPass, setActiveBoardingPass] = useState<BusSeatBooking | null>(null);
-  const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+  // Dedicated Full-Page Ticket Booking State (Zero modal overlap)
+  const [bookingBusId, setBookingBusId] = useState<string | null>(null);
+  const [inspectingBooking, setInspectingBooking] = useState<BusSeatBooking | null>(null);
 
   // Filter Bookings for Current User (Multi-device matching by email OR ID)
   const myPasses = seatBookings.filter(b => {
@@ -166,6 +160,31 @@ export const Transport: React.FC = () => {
     return matchesStatus && matchesSearch;
   });
 
+  // Dedicated Full-Page Ticket Booking Station (100% full page cover, zero modal overlap)
+  if (bookingBusId || inspectingBooking) {
+    return (
+      <TicketBookingTerminal
+        initialBusId={bookingBusId || undefined}
+        initialBooking={inspectingBooking}
+        seatBookings={seatBookings}
+        onBookSeat={bookSeat}
+        currentUserEmail={profile?.email}
+        currentUserName={profile?.name}
+        currentUserIdNo={profile?.id_no}
+        onClose={() => {
+          setBookingBusId(null);
+          setInspectingBooking(null);
+        }}
+        onViewMyPasses={() => {
+          setBookingBusId(null);
+          setInspectingBooking(null);
+          setActiveTab('my_passes');
+        }}
+        onCancelBooking={id => cancelSeatBooking(id)}
+      />
+    );
+  }
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* Header Banner */}
@@ -261,7 +280,7 @@ export const Transport: React.FC = () => {
 
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => setIsGL1ModalOpen(true)}
+                onClick={() => setBookingBusId('bus-1')}
                 style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
               >
                 <Armchair size={14} /> Book Mirpur Seat
@@ -290,7 +309,7 @@ export const Transport: React.FC = () => {
 
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => setIsGL2ModalOpen(true)}
+                onClick={() => setBookingBusId('bus-2')}
                 style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
               >
                 <Armchair size={14} /> Book Uttara Seat
@@ -319,7 +338,7 @@ export const Transport: React.FC = () => {
 
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => setIsGL3ModalOpen(true)}
+                onClick={() => setBookingBusId('bus-3')}
                 style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)' }}
               >
                 <Armchair size={14} /> Book Bishnandi Seat
@@ -348,7 +367,7 @@ export const Transport: React.FC = () => {
 
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => setIsGL4ModalOpen(true)}
+                onClick={() => setBookingBusId('bus-4')}
                 style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
               >
                 <Armchair size={14} /> Book Savar Seat
@@ -480,10 +499,10 @@ export const Transport: React.FC = () => {
                       className="btn btn-primary"
                       style={{ width: '100%', justifyContent: 'center', background: theme.btnGradient }}
                       onClick={() => {
-                        if (theme.key === 'gl1') setIsGL1ModalOpen(true);
-                        else if (theme.key === 'gl2') setIsGL2ModalOpen(true);
-                        else if (theme.key === 'gl3') setIsGL3ModalOpen(true);
-                        else setIsGL4ModalOpen(true);
+                        if (theme.key === 'gl1') setBookingBusId('bus-1');
+                        else if (theme.key === 'gl2') setBookingBusId('bus-2');
+                        else if (theme.key === 'gl3') setBookingBusId('bus-3');
+                        else setBookingBusId('bus-4');
                       }}
                     >
                       <Armchair size={16} /> Select Bus & Reserve 45-Seat Cabin
@@ -535,7 +554,7 @@ export const Transport: React.FC = () => {
 
             <button
               className="btn btn-primary"
-              onClick={() => setIsGL1ModalOpen(true)}
+              onClick={() => setBookingBusId('bus-1')}
               style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
               <Maximize2 size={16} /> Open Full-Screen Booking Terminal
@@ -575,7 +594,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL1ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-1')}
                   >
                     <Armchair size={14} /> Select Seat on {trip.busNumber}
                   </button>
@@ -617,7 +636,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL1ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-1')}
                   >
                     <Armchair size={14} /> Select Return Seat ({trip.departureTime})
                   </button>
@@ -655,7 +674,7 @@ export const Transport: React.FC = () => {
 
             <button
               className="btn btn-primary"
-              onClick={() => setIsGL2ModalOpen(true)}
+              onClick={() => setBookingBusId('bus-2')}
               style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
               <Maximize2 size={16} /> Open Full-Screen Booking Terminal
@@ -695,7 +714,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL2ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-2')}
                   >
                     <Armchair size={14} /> Book Seat on {trip.busNumber}
                   </button>
@@ -737,7 +756,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL2ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-2')}
                   >
                     <Armchair size={14} /> Book Return Seat ({trip.departureTime})
                   </button>
@@ -775,7 +794,7 @@ export const Transport: React.FC = () => {
 
             <button
               className="btn btn-primary"
-              onClick={() => setIsGL3ModalOpen(true)}
+              onClick={() => setBookingBusId('bus-3')}
               style={{ background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
               <Maximize2 size={16} /> Open Full-Screen Booking Terminal
@@ -815,7 +834,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL3ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-3')}
                   >
                     <Armchair size={14} /> Select Seat on {trip.busNumber}
                   </button>
@@ -857,7 +876,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL3ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-3')}
                   >
                     <Armchair size={14} /> Select Return Seat ({trip.departureTime})
                   </button>
@@ -895,7 +914,7 @@ export const Transport: React.FC = () => {
 
             <button
               className="btn btn-primary"
-              onClick={() => setIsGL4ModalOpen(true)}
+              onClick={() => setBookingBusId('bus-4')}
               style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
             >
               <Maximize2 size={16} /> Open Full-Screen Booking Terminal
@@ -935,7 +954,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL4ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-4')}
                   >
                     <Armchair size={14} /> Book Seat on {trip.busNumber}
                   </button>
@@ -977,7 +996,7 @@ export const Transport: React.FC = () => {
                   <button
                     className="btn btn-secondary btn-sm"
                     style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setIsGL4ModalOpen(true)}
+                    onClick={() => setBookingBusId('bus-4')}
                   >
                     <Armchair size={14} /> Book Return Seat ({trip.departureTime})
                   </button>
@@ -1027,27 +1046,27 @@ export const Transport: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button 
                   className="btn btn-primary" 
-                  onClick={() => setIsGL1ModalOpen(true)}
+                  onClick={() => setBookingBusId('bus-1')}
                   style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
                 >
                   <Armchair size={17} /> Book Line 1 (Mirpur)
                 </button>
                 <button 
                   className="btn btn-primary" 
-                  onClick={() => setIsGL2ModalOpen(true)}
+                  onClick={() => setBookingBusId('bus-2')}
                 >
                   <Armchair size={17} /> Book Line 2 (Uttara)
                 </button>
                 <button 
                   className="btn btn-primary" 
-                  onClick={() => setIsGL3ModalOpen(true)}
+                  onClick={() => setBookingBusId('bus-3')}
                   style={{ background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)' }}
                 >
                   <Armchair size={17} /> Book Line 3 (Bishnandi)
                 </button>
                 <button 
                   className="btn btn-primary" 
-                  onClick={() => setIsGL4ModalOpen(true)}
+                  onClick={() => setBookingBusId('bus-4')}
                   style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
                 >
                   <Armchair size={17} /> Book Line 4 (Savar)
@@ -1114,8 +1133,7 @@ export const Transport: React.FC = () => {
                         className="btn btn-primary btn-sm"
                         style={{ flex: 1, justifyContent: 'center', background: passTheme.btnGradient }}
                         onClick={() => {
-                          setActiveBoardingPass(pass);
-                          setIsPassModalOpen(true);
+                          setInspectingBooking(pass);
                         }}
                       >
                         <QrCode size={15} /> View E-Ticket Pass
@@ -1140,82 +1158,6 @@ export const Transport: React.FC = () => {
           )}
         </div>
       )}
-
-      {/* ========================================================================= */}
-      {/* GREEN LINE 1 MODAL (ROYAL BLUE) */}
-      {/* ========================================================================= */}
-      <GreenLine1Modal
-        isOpen={isGL1ModalOpen}
-        onClose={() => setIsGL1ModalOpen(false)}
-        seatBookings={seatBookings}
-        onBookSeat={bookSeat}
-        currentUserEmail={profile?.email}
-        currentUserName={profile?.name}
-        currentUserIdNo={profile?.id_no}
-        onBookingSuccess={booking => {
-          setActiveBoardingPass(booking);
-          setIsPassModalOpen(true);
-        }}
-      />
-
-      {/* ========================================================================= */}
-      {/* GREEN LINE 2 MODAL (EMERALD GREEN) */}
-      {/* ========================================================================= */}
-      <GreenLine2Modal
-        isOpen={isGL2ModalOpen}
-        onClose={() => setIsGL2ModalOpen(false)}
-        seatBookings={seatBookings}
-        onBookSeat={bookSeat}
-        currentUserEmail={profile?.email}
-        currentUserName={profile?.name}
-        currentUserIdNo={profile?.id_no}
-        onBookingSuccess={booking => {
-          setActiveBoardingPass(booking);
-          setIsPassModalOpen(true);
-        }}
-      />
-
-      {/* ========================================================================= */}
-      {/* GREEN LINE 3 MODAL (CYAN / TEAL) */}
-      {/* ========================================================================= */}
-      <GreenLine3Modal
-        isOpen={isGL3ModalOpen}
-        onClose={() => setIsGL3ModalOpen(false)}
-        seatBookings={seatBookings}
-        onBookSeat={bookSeat}
-        currentUserEmail={profile?.email}
-        currentUserName={profile?.name}
-        currentUserIdNo={profile?.id_no}
-        onBookingSuccess={booking => {
-          setActiveBoardingPass(booking);
-          setIsPassModalOpen(true);
-        }}
-      />
-
-      {/* ========================================================================= */}
-      {/* GREEN LINE 4 MODAL (AMBER / GOLD) */}
-      {/* ========================================================================= */}
-      <GreenLine4Modal
-        isOpen={isGL4ModalOpen}
-        onClose={() => setIsGL4ModalOpen(false)}
-        seatBookings={seatBookings}
-        onBookSeat={bookSeat}
-        currentUserEmail={profile?.email}
-        currentUserName={profile?.name}
-        currentUserIdNo={profile?.id_no}
-        onBookingSuccess={booking => {
-          setActiveBoardingPass(booking);
-          setIsPassModalOpen(true);
-        }}
-      />
-
-      {/* Digital Boarding Pass Modal */}
-      <BoardingPassModal
-        booking={activeBoardingPass}
-        isOpen={isPassModalOpen}
-        onClose={() => setIsPassModalOpen(false)}
-        onCancelBooking={id => cancelSeatBooking(id)}
-      />
     </div>
   );
 };

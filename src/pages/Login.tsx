@@ -19,7 +19,8 @@ import {
   Sparkles,
   AlertCircle,
   UserCheck,
-  Globe
+  Globe,
+  Bus as BusIcon
 } from 'lucide-react';
 import { UserRole } from '../types';
 
@@ -29,6 +30,7 @@ export const Login: React.FC = () => {
   const t = translations[language];
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [loginRole, setLoginRole] = useState<'student' | 'conductor' | 'general'>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -155,7 +157,7 @@ export const Login: React.FC = () => {
   // Live check against local storage and Supabase cloud database as user types ID
   useEffect(() => {
     const clean = idNo.trim();
-    if (!clean || (role === 'student' && clean.length !== 9)) {
+    if (!clean || ((role === 'student' || role === 'conductor') && clean.length !== 9)) {
       setRemoteIdTaken(false);
       setRemoteOwnerName('');
       return;
@@ -205,7 +207,28 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     if (mode === 'login') {
-      const { error } = await signIn(email, password);
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Role-specific login validation rules
+      if (loginRole === 'student') {
+        const isDemoStudent = cleanEmail === 'student@green.edu.bd';
+        const isStudentPattern = /^\d{9}@student\.green\.ac\.bd$/.test(cleanEmail);
+        if (!isDemoStudent && !isStudentPattern) {
+          setLoading(false);
+          addToast('error', t.toastLoginStudentRule, t.toastSignInFailed);
+          return;
+        }
+      } else if (loginRole === 'conductor') {
+        const isDemoConductor = cleanEmail === 'conductor@green.edu.bd';
+        const isConductorPattern = /^\d{9}@green\.conductor\.bd$/.test(cleanEmail);
+        if (!isDemoConductor && !isConductorPattern) {
+          setLoading(false);
+          addToast('error', t.toastLoginConductorRule, t.toastSignInFailed);
+          return;
+        }
+      }
+
+      const { error } = await signIn(cleanEmail, password);
       if (error) {
         addToast('error', error.message || t.toastInvalidCredentials, t.toastSignInFailed);
       } else {
@@ -213,6 +236,7 @@ export const Login: React.FC = () => {
       }
     } else {
       const cleanId = idNo.trim();
+      const cleanEmail = email.trim().toLowerCase();
 
       // Validate Student Registration Rules (Strictly 9-digit ID and exact [ID]@student.green.ac.bd match)
       if (role === 'student') {
@@ -226,7 +250,6 @@ export const Login: React.FC = () => {
           return;
         }
 
-        const cleanEmail = email.trim().toLowerCase();
         const expectedEmail = `${cleanId}@student.green.ac.bd`;
         if (cleanEmail !== expectedEmail) {
           setLoading(false);
@@ -239,11 +262,35 @@ export const Login: React.FC = () => {
         }
       }
 
+      // Validate Conductor Registration Rules (Strictly 9-digit ID and exact [ID]@green.conductor.bd match)
+      if (role === 'conductor') {
+        if (cleanId.length !== 9 || !/^\d{9}$/.test(cleanId)) {
+          setLoading(false);
+          addToast(
+            'error', 
+            t.toastInvalidConductorIdMsg.replace('{count}', String(cleanId.length)), 
+            t.toastInvalidConductorIdTitle
+          );
+          return;
+        }
+
+        const expectedEmail = `${cleanId}@green.conductor.bd`;
+        if (cleanEmail !== expectedEmail) {
+          setLoading(false);
+          addToast(
+            'error', 
+            t.toastConductorEmailMatchMsg.replace('{expected}', expectedEmail).replace('{actual}', cleanEmail), 
+            t.toastConductorEmailMatchTitle
+          );
+          return;
+        }
+      }
+
       // Check if ID is already registered locally or remotely
       if (isIdTaken(cleanId) || remoteIdTaken) {
         setLoading(false);
         addToast(
-          'error',
+          'error', 
           t.toastIdTakenMsg.replace('{id}', cleanId).replace('{owner}', remoteOwnerName || (language === 'bn' ? 'বিদ্যমান অ্যাকাউন্ট' : 'Existing Account')),
           t.toastIdTakenTitle
         );
@@ -263,7 +310,7 @@ export const Login: React.FC = () => {
           setRemoteIdTaken(true);
           setRemoteOwnerName(dbMatches[0].name || dbMatches[0].email || (language === 'bn' ? 'ডাটাবেজে রয়েছে' : 'in Database'));
           addToast(
-            'error',
+            'error', 
             t.toastIdTakenMsg.replace('{id}', cleanId).replace('{owner}', dbMatches[0].name || dbMatches[0].email),
             t.toastIdTakenTitle
           );
@@ -274,7 +321,7 @@ export const Login: React.FC = () => {
       }
 
       const finalDept = role === 'conductor' ? 'Transport & Fleet Division' : department;
-      const { error } = await signUp(email, password, name, role, finalDept, idNo);
+      const { error } = await signUp(cleanEmail, password, name, role, finalDept, cleanId);
       if (error) {
         addToast('error', error.message || (language === 'bn' ? 'রেজিস্ট্রেশন সম্পন্ন করা সম্ভব হয়নি।' : 'Registration failed.'), t.toastSignUpFailed);
       } else {
@@ -293,6 +340,8 @@ export const Login: React.FC = () => {
   };
 
   const isStudentEmailMatched = role === 'student' && idNo.trim().length === 9 && email.trim().toLowerCase() === `${idNo.trim()}@student.green.ac.bd`;
+  const isConductorEmailMatched = role === 'conductor' && idNo.trim().length === 9 && email.trim().toLowerCase() === `${idNo.trim()}@green.conductor.bd`;
+  const isEmailMatched = role === 'student' ? isStudentEmailMatched : role === 'conductor' ? isConductorEmailMatched : true;
   const isCurrentIdDuplicate = isIdTaken(idNo) || remoteIdTaken;
 
   return (
@@ -484,6 +533,110 @@ export const Login: React.FC = () => {
           className="login-form" 
           style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
         >
+          {/* Mode === 'login': Prominent Role Choice Selector (Student vs Conductor vs Faculty/Admin) */}
+          {mode === 'login' && (
+            <div className="login-role-selector-container" style={{
+              background: theme === 'dark' ? 'rgba(15, 23, 42, 0.7)' : theme === 'pink' ? 'rgba(236, 72, 153, 0.08)' : 'rgba(241, 245, 249, 0.85)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.75rem',
+              marginBottom: '0.25rem'
+            }}>
+              <div style={{
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: 'var(--text-secondary)',
+                marginBottom: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <UserCheck size={14} />
+                <span>{t.loginRoleTitle}</span>
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '6px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setLoginRole('student')}
+                  style={{
+                    padding: '0.6rem 0.35rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: loginRole === 'student' ? '1.5px solid #10b981' : '1px solid var(--border-subtle)',
+                    background: loginRole === 'student' 
+                      ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.12)')
+                      : (theme === 'dark' ? '#1e293b' : '#ffffff'),
+                    color: loginRole === 'student' ? '#10b981' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>🎓</span>
+                  <span>{t.roleStudent}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLoginRole('conductor')}
+                  style={{
+                    padding: '0.6rem 0.35rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: loginRole === 'conductor' ? '1.5px solid #f59e0b' : '1px solid var(--border-subtle)',
+                    background: loginRole === 'conductor' 
+                      ? (theme === 'dark' ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.12)')
+                      : (theme === 'dark' ? '#1e293b' : '#ffffff'),
+                    color: loginRole === 'conductor' ? '#f59e0b' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>🚌</span>
+                  <span>{t.roleConductorShort}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLoginRole('general')}
+                  style={{
+                    padding: '0.6rem 0.35rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: loginRole === 'general' ? '1.5px solid #6366f1' : '1px solid var(--border-subtle)',
+                    background: loginRole === 'general' 
+                      ? (theme === 'dark' ? 'rgba(99, 102, 241, 0.22)' : 'rgba(99, 102, 241, 0.12)')
+                      : (theme === 'dark' ? '#1e293b' : '#ffffff'),
+                    color: loginRole === 'general' ? '#818cf8' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>🏛️</span>
+                  <span>{t.roleAdminShort}/{t.roleTeacher}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {mode === 'register' && (
             <>
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -516,6 +669,12 @@ export const Login: React.FC = () => {
                       setIdNo(clean);
                       if (clean) {
                         setEmail(`${clean}@student.green.ac.bd`);
+                      }
+                    } else if (newRole === 'conductor') {
+                      const clean = idNo.trim().replace(/\D/g, '').slice(0, 9);
+                      setIdNo(clean);
+                      if (clean) {
+                        setEmail(`${clean}@green.conductor.bd`);
                       }
                     }
                   }}
@@ -556,7 +715,7 @@ export const Login: React.FC = () => {
                     <Fingerprint size={14} style={{ display: 'inline', marginRight: '4px' }} /> 
                     {role === 'conductor' ? t.labelConductorId : t.labelUniversityId}
                   </label>
-                  {role === 'student' && (
+                  {(role === 'student' || role === 'conductor') && (
                     <span style={{ 
                       fontSize: '0.74rem', 
                       fontWeight: 700, 
@@ -577,13 +736,17 @@ export const Login: React.FC = () => {
                       : t.placeholderIdTeacher
                   }
                   value={idNo}
-                  maxLength={role === 'student' ? 9 : 25}
+                  maxLength={role === 'student' || role === 'conductor' ? 9 : 25}
                   onChange={e => {
                     let val = e.target.value;
                     if (role === 'student') {
                       val = val.replace(/\D/g, '').slice(0, 9);
                       // Instantly sync email: as soon as ID is typed, email immediately becomes [ID]@student.green.ac.bd
                       setEmail(val ? `${val}@student.green.ac.bd` : '');
+                    } else if (role === 'conductor') {
+                      val = val.replace(/\D/g, '').slice(0, 9);
+                      // Instantly sync conductor email: [ID]@green.conductor.bd
+                      setEmail(val ? `${val}@green.conductor.bd` : '');
                     }
                     setIdNo(val);
                   }}
@@ -591,15 +754,15 @@ export const Login: React.FC = () => {
                     ...inputStyle,
                     borderColor: isCurrentIdDuplicate
                       ? '#ef4444'
-                      : role === 'student' && idNo.length > 0 && idNo.length !== 9 
+                      : (role === 'student' || role === 'conductor') && idNo.length > 0 && idNo.length !== 9 
                       ? '#f59e0b' 
-                      : role === 'student' && idNo.length === 9 
+                      : (role === 'student' || role === 'conductor') && idNo.length === 9 
                       ? '#10b981' 
                       : inputStyle.borderColor
                   }}
                   required
                 />
-                {role === 'student' && (
+                {(role === 'student' || role === 'conductor') && (
                   <div style={{ marginTop: '0.35rem' }}>
                     {isCurrentIdDuplicate ? (
                       <div style={{ 
@@ -623,25 +786,35 @@ export const Login: React.FC = () => {
                       </div>
                     ) : idNo.length === 0 ? (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {t.idRuleNote}
+                        {role === 'conductor' 
+                          ? (language === 'bn' ? '* কন্ডাকটর আইডি অবশ্যই ঠিক ৯টি সংখ্যার হতে হবে (যেমন: ২৩২০০২০৩৮)।' : '* Conductor ID must be exactly 9 numeric digits (e.g. 232002038).')
+                          : t.idRuleNote}
                       </div>
                     ) : idNo.length < 9 ? (
                       <div style={{ fontSize: '0.76rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                         <AlertCircle size={13} color="#f59e0b" />
                         <span>
-                          {t.idRemainingNote
-                            .replace('{current}', String(idNo.length))
-                            .replace('{needed}', String(9 - idNo.length))
-                            .replace('{email}', `${idNo}@student.green.ac.bd`)}
+                          {role === 'conductor'
+                            ? (language === 'bn' 
+                                ? `কন্ডাকটর আইডি অবশ্যই ৯ সংখ্যার হতে হবে (${idNo.length}/৯)। আরও ${9 - idNo.length} সংখ্যা প্রয়োজন। আপনার ইমেইল হবে: ${idNo}@green.conductor.bd` 
+                                : `ID must be 9 digits (${idNo.length}/9). ${9 - idNo.length} more needed. Email will be: ${idNo}@green.conductor.bd`)
+                            : t.idRemainingNote
+                                .replace('{current}', String(idNo.length))
+                                .replace('{needed}', String(9 - idNo.length))
+                                .replace('{email}', `${idNo}@student.green.ac.bd`)}
                         </span>
                       </div>
                     ) : (
                       <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                         <CheckCircle2 size={13} color="#10b981" />
                         <span>
-                          {t.idValidAvailable
-                            .replace('{id}', idNo)
-                            .replace('{email}', `${idNo}@student.green.ac.bd`)}
+                          {role === 'conductor'
+                            ? (language === 'bn' 
+                                ? `সঠিক ৯ ডিজিটের কন্ডাকটর আইডি (${idNo}) পাওয়া গেছে — ইমেইল: ${idNo}@green.conductor.bd` 
+                                : `Valid 9-digit Conductor ID (${idNo}) is available — Email: ${idNo}@green.conductor.bd`)
+                            : t.idValidAvailable
+                                .replace('{id}', idNo)
+                                .replace('{email}', `${idNo}@student.green.ac.bd`)}
                         </span>
                       </div>
                     )}
@@ -651,13 +824,17 @@ export const Login: React.FC = () => {
             </>
           )}
 
-          {/* Email Field with explicit USER requirement: Your Microsoft Account Email */}
+          {/* Email Field with explicit USER requirement: Your Microsoft Account Email (student) or Conductor Email (conductor) */}
           <div className="form-group" style={{ marginBottom: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
               <label className="form-label" style={{ marginBottom: 0 }}>
                 <Mail size={14} style={{ display: 'inline', marginRight: '4px' }} /> 
-                {mode === 'register' ? t.labelEmailRegister : t.labelEmailLogin}
+                {mode === 'register' 
+                  ? (role === 'conductor' ? t.labelConductorEmail : role === 'student' ? t.labelEmailRegister : t.labelEmailLogin)
+                  : (loginRole === 'conductor' ? t.labelConductorEmail : t.labelEmailLogin)}
               </label>
+
+              {/* Student Register 1-Click Auto Fill */}
               {mode === 'register' && role === 'student' && (
                 <button
                   type="button"
@@ -693,24 +870,121 @@ export const Login: React.FC = () => {
                   )}
                 </button>
               )}
+
+              {/* Conductor Register 1-Click Auto Fill */}
+              {mode === 'register' && role === 'conductor' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (idNo) {
+                      setEmail(`${idNo}@green.conductor.bd`);
+                    }
+                  }}
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: isConductorEmailMatched ? '#10b981' : '#f59e0b',
+                    background: isConductorEmailMatched ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                    border: `1px solid ${isConductorEmailMatched ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.4)'}`,
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title={language === 'bn' ? '১-ক্লিকে কন্ডাকটর ইমেইল বসান' : 'Click to auto-fill official conductor email'}
+                >
+                  {isConductorEmailMatched ? (
+                    <>
+                      <CheckCircle2 size={12} color="#10b981" />
+                      <span>{t.msAutoFillMatched.replace('{email}', `${idNo}@green.conductor.bd`)}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{t.msAutoFillChip.replace('{email}', idNo ? `${idNo}@green.conductor.bd` : '[ID]@green.conductor.bd')}</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Login Mode 1-Click Suffix Helper if 9 numeric digits typed */}
+              {mode === 'login' && (
+                <>
+                  {loginRole === 'student' && /^\d{9}$/.test(email.trim()) && (
+                    <button
+                      type="button"
+                      onClick={() => setEmail(`${email.trim()}@student.green.ac.bd`)}
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#10b981',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        border: '1px solid rgba(16, 185, 129, 0.35)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span>⚡ {email.trim()}@student.green.ac.bd</span>
+                    </button>
+                  )}
+                  {loginRole === 'conductor' && /^\d{9}$/.test(email.trim()) && (
+                    <button
+                      type="button"
+                      onClick={() => setEmail(`${email.trim()}@green.conductor.bd`)}
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#f59e0b',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span>⚡ {email.trim()}@green.conductor.bd</span>
+                    </button>
+                  )}
+                </>
+              )}
             </div>
+
             <input
               type="email"
               className="form-input"
               placeholder={
                 mode === 'register' && role === 'student'
                   ? (idNo ? `${idNo}@student.green.ac.bd` : t.placeholderEmailRegister)
+                  : mode === 'register' && role === 'conductor'
+                  ? (idNo ? `${idNo}@green.conductor.bd` : '232002038@green.conductor.bd')
+                  : mode === 'login' && loginRole === 'student'
+                  ? '232002038@student.green.ac.bd'
+                  : mode === 'login' && loginRole === 'conductor'
+                  ? '232002038@green.conductor.bd'
                   : t.placeholderEmailLogin
               }
               value={email}
               onChange={e => setEmail(e.target.value)}
               style={{
                 ...inputStyle,
-                borderColor: mode === 'register' && role === 'student' && email.length > 0 && !isStudentEmailMatched
-                  ? '#ef4444'
-                  : mode === 'register' && role === 'student' && isStudentEmailMatched
-                  ? '#10b981'
-                  : inputStyle.borderColor
+                borderColor: 
+                  mode === 'register' && role === 'student' && email.length > 0 && !isStudentEmailMatched
+                    ? '#ef4444'
+                    : mode === 'register' && role === 'student' && isStudentEmailMatched
+                    ? '#10b981'
+                    : mode === 'register' && role === 'conductor' && email.length > 0 && !isConductorEmailMatched
+                    ? '#ef4444'
+                    : mode === 'register' && role === 'conductor' && isConductorEmailMatched
+                    ? '#10b981'
+                    : inputStyle.borderColor
               }}
               required
             />
@@ -773,6 +1047,103 @@ export const Login: React.FC = () => {
                     >
                       <span>{t.msAutoFillChip.replace('{email}', `${idNo}@student.green.ac.bd`)}</span>
                     </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Conductor Email Exact Match & Guidance Banner */}
+            {mode === 'register' && role === 'conductor' && (
+              <div style={{ marginTop: '0.35rem' }}>
+                {idNo.length < 9 ? (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {t.conductorEmailNote}
+                  </div>
+                ) : isConductorEmailMatched ? (
+                  <div style={{ fontSize: '0.76rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                    <CheckCircle2 size={13} color="#10b981" />
+                    <span>
+                      {language === 'bn' 
+                        ? `যথাযথ মিল রয়েছে: ${email} (আইডি: ${idNo})` 
+                        : `Exact match: ${email} (Matched with ID: ${idNo})`}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    fontSize: '0.78rem',
+                    marginTop: '0.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#ef4444', fontWeight: 700 }}>
+                      <AlertCircle size={14} color="#ef4444" />
+                      <span>{language === 'bn' ? 'আইডি ও কন্ডাক্টর ইমেইল মিল থাকা আবশ্যক' : 'ID & Conductor Email Match Required'}</span>
+                    </div>
+                    <div style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                      {t.conductorEmailMismatchAlert
+                        .replace('{expected}', `${idNo}@green.conductor.bd`)
+                        .replace('{actual}', email)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEmail(`${idNo}@green.conductor.bd`)}
+                      style={{
+                        alignSelf: 'flex-start',
+                        marginTop: '2px',
+                        padding: '5px 12px',
+                        borderRadius: '4px',
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        color: '#fff',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(245, 158, 11, 0.35)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      <span>{t.msAutoFillChip.replace('{email}', `${idNo}@green.conductor.bd`)}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Login Mode Validation Hints */}
+            {mode === 'login' && loginRole === 'student' && (
+              <div style={{ marginTop: '0.35rem' }}>
+                {email.length > 0 && !/^\d{9}@student\.green\.ac\.bd$/.test(email.trim().toLowerCase()) && email.trim().toLowerCase() !== 'student@green.edu.bd' ? (
+                  <div style={{ fontSize: '0.76rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                    <AlertCircle size={13} color="#ef4444" />
+                    <span>{language === 'bn' ? 'ফরম্যাট: ৯টি সংখ্যা + @student.green.ac.bd আবশ্যক' : 'Format: 9 digits + @student.green.ac.bd required'}</span>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    {language === 'bn' 
+                      ? '* ৯ ডিজিটের শিক্ষার্থী আইডি + @student.green.ac.bd দিয়ে সাইন ইন করুন' 
+                      : '* Sign in with 9-digit Student ID + @student.green.ac.bd'}
+                  </div>
+                )}
+              </div>
+            )}
+            {mode === 'login' && loginRole === 'conductor' && (
+              <div style={{ marginTop: '0.35rem' }}>
+                {email.length > 0 && !/^\d{9}@green\.conductor\.bd$/.test(email.trim().toLowerCase()) && email.trim().toLowerCase() !== 'conductor@green.edu.bd' ? (
+                  <div style={{ fontSize: '0.76rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                    <AlertCircle size={13} color="#ef4444" />
+                    <span>{language === 'bn' ? 'ফরম্যাট: ৯টি সংখ্যা + @green.conductor.bd আবশ্যক' : 'Format: 9 digits + @green.conductor.bd required'}</span>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    {language === 'bn' 
+                      ? '* ৯ ডিজিটের স্টাফ আইডি + @green.conductor.bd দিয়ে সাইন ইন করুন' 
+                      : '* Sign in with 9-digit Staff ID + @green.conductor.bd'}
                   </div>
                 )}
               </div>

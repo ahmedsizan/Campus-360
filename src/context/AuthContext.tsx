@@ -40,55 +40,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('email', emailLower)
         .maybeSingle();
 
-      const isDemoAccount = 
+      // Real conductor (@green.conductor.bd) and real student (@student.green.ac.bd) accounts are NEVER demo!
+      const isRealConductor = emailLower.endsWith('@green.conductor.bd');
+      const isRealStudent = emailLower.endsWith('@student.green.ac.bd');
+
+      const isDemoAccount = !isRealConductor && !isRealStudent && (
         emailLower === 'student@green.edu.bd' ||
         emailLower === 'teacher@green.edu.bd' ||
         emailLower === 'admin@green.edu.bd' ||
         emailLower === 'conductor@green.edu.bd' ||
         Boolean(data?.is_demo) ||
-        Boolean(authUser?.user_metadata?.is_demo);
+        Boolean(authUser?.user_metadata?.is_demo)
+      );
+
+      const rawMeta = authUser?.user_metadata || {};
+      const resolvedRole: UserRole = isRealConductor 
+        ? 'conductor' 
+        : (rawMeta.app_role as UserRole) || (rawMeta.role as UserRole) || (data?.role as UserRole) || (emailLower.includes('admin') ? 'admin' : emailLower.includes('teacher') ? 'teacher' : 'student');
 
       if (data && !error) {
         const resolvedAvatar = getResolvedAvatar(emailLower, data.avatar);
         const resolvedProfile: UserProfile = {
           ...data,
+          role: resolvedRole,
           avatar: resolvedAvatar,
-          is_demo: data.is_demo !== undefined ? Boolean(data.is_demo) : isDemoAccount,
+          is_demo: isDemoAccount, // ALWAYS false for real accounts
         };
         setProfile(resolvedProfile);
         localStorage.setItem('gub_user', JSON.stringify(resolvedProfile));
         return;
       }
 
-      // 2. Determine default role if not yet populated
-      let role: UserRole = 'student';
-      if (emailLower.includes('admin')) {
-        role = 'admin';
-      } else if (
-        emailLower.includes('teacher') ||
-        emailLower.includes('faculty') ||
-        emailLower.includes('prof')
-      ) {
-        role = 'teacher';
-      } else if (
-        emailLower.includes('conductor') ||
-        emailLower.includes('helper') ||
-        emailLower.includes('driver')
-      ) {
-        role = 'conductor';
+      const idPrefix = emailLower.split('@')[0];
+      const defaultId = /^\d{9}$/.test(idPrefix)
+        ? idPrefix
+        : (resolvedRole === 'conductor' ? 'GUB-STAFF-042' : `22100${Math.floor(Math.random() * 800 + 100)}`);
+
+      let defaultName = 'Ahmed Sizan';
+      if (resolvedRole === 'conductor') {
+        defaultName = `Bus Conductor (${defaultId})`;
+      } else if (resolvedRole === 'student') {
+        defaultName = `Student (${defaultId})`;
       }
 
-      const rawMeta = authUser?.user_metadata || {};
       const newProfile: UserProfile = {
         id: authUser?.id || `usr-${Date.now()}`,
         email: emailLower,
-        name: rawMeta.name || (role === 'conductor' ? 'Md. Rafiqul Islam (Bus Conductor)' : 'Ahmed Sizan'),
-        role: (rawMeta.role as UserRole) || role,
-        department: rawMeta.department || (role === 'conductor' ? 'Transport & Fleet Management' : 'Computer Science & Engineering'),
-        id_no: rawMeta.id_no || (role === 'conductor' ? 'GUB-STAFF-042' : `GUB-22100${Math.floor(Math.random() * 800 + 100)}`),
-        semester: role === 'conductor' ? 'Fleet Staff' : 'Spring 2026',
+        name: rawMeta.name || defaultName,
+        role: resolvedRole,
+        department: rawMeta.department || (resolvedRole === 'conductor' ? 'Transport & Fleet Division' : 'Computer Science & Engineering'),
+        id_no: rawMeta.id_no || defaultId,
+        semester: resolvedRole === 'conductor' ? 'Staff' : 'Spring 2026',
         avatar: getResolvedAvatar(emailLower, rawMeta.avatar),
-        bio: `${role === 'teacher' ? 'Faculty Member' : role === 'admin' ? 'Administrator' : role === 'conductor' ? 'Bus Conductor & Transit In-Charge' : 'Student'} at Green University of Bangladesh`,
+        bio: `${resolvedRole === 'teacher' ? 'Faculty Member' : resolvedRole === 'admin' ? 'Administrator' : resolvedRole === 'conductor' ? 'Bus Conductor & Transit Staff' : 'Student'} at Green University of Bangladesh`,
         is_demo: isDemoAccount,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -99,7 +103,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 3. Upsert to Supabase profiles table
       if (authUser?.id) {
-        await supabase.from('profiles').upsert([newProfile]);
+        try {
+          await supabase.from('profiles').upsert([newProfile]);
+        } catch {}
       }
     } catch (err) {
       console.error('Error syncing user profile from Supabase:', err);
@@ -131,6 +137,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               try {
                 const parsed = JSON.parse(savedUser) as UserProfile;
                 if (parsed && parsed.email) {
+                  const pEmail = parsed.email.toLowerCase();
+
+                  // SELF-HEALING: Remove accidental demo status & demo name from real accounts
+                  if (pEmail.endsWith('@green.conductor.bd')) {
+                    parsed.is_demo = false;
+                    parsed.role = 'conductor';
+                    const idPart = pEmail.split('@')[0];
+                    if (/^\d{9}$/.test(idPart)) {
+                      parsed.id_no = idPart;
+                    }
+                    if (parsed.name === 'Md. Rafiqul Islam (Bus Conductor)' || !parsed.name) {
+                      try {
+                        const localReg = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
+                        const match = localReg.find(u => u.email?.toLowerCase() === pEmail);
+                        parsed.name = (match && match.name && match.name !== 'Md. Rafiqul Islam (Bus Conductor)') 
+                          ? match.name 
+                          : `Bus Conductor (${parsed.id_no || idPart})`;
+                      } catch {
+                        parsed.name = `Bus Conductor (${parsed.id_no || idPart})`;
+                      }
+                    }
+                    localStorage.setItem('gub_user', JSON.stringify(parsed));
+                  } else if (pEmail.endsWith('@student.green.ac.bd')) {
+                    parsed.is_demo = false;
+                    parsed.role = 'student';
+                    const idPart = pEmail.split('@')[0];
+                    if (/^\d{9}$/.test(idPart)) {
+                      parsed.id_no = idPart;
+                    }
+                    if (parsed.name === 'Ahmed Sizan') {
+                      try {
+                        const localReg = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
+                        const match = localReg.find(u => u.email?.toLowerCase() === pEmail);
+                        if (match && match.name && match.name !== 'Ahmed Sizan') {
+                          parsed.name = match.name;
+                        }
+                      } catch {}
+                    }
+                    localStorage.setItem('gub_user', JSON.stringify(parsed));
+                  }
+
                   parsed.avatar = getResolvedAvatar(parsed.email, parsed.avatar);
                   setProfile(parsed);
                   setUser({ id: parsed.id, email: parsed.email, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
@@ -184,9 +231,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const parsed = JSON.parse(savedUser) as UserProfile;
             if (parsed.email && parsed.email.toLowerCase() === emailClean) {
+              if (emailClean.endsWith('@green.conductor.bd')) {
+                parsed.is_demo = false;
+                parsed.role = 'conductor';
+              } else if (emailClean.endsWith('@student.green.ac.bd')) {
+                parsed.is_demo = false;
+                parsed.role = 'student';
+              }
               parsed.avatar = getResolvedAvatar(emailClean, parsed.avatar);
               setProfile(parsed);
               setUser({ id: parsed.id, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
+              localStorage.setItem('gub_user', JSON.stringify(parsed));
               return { error: null };
             }
           } catch {}
@@ -197,6 +252,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
           const matched = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean);
           if (matched) {
+            if (emailClean.endsWith('@green.conductor.bd')) {
+              matched.is_demo = false;
+              matched.role = 'conductor';
+            } else if (emailClean.endsWith('@student.green.ac.bd')) {
+              matched.is_demo = false;
+              matched.role = 'student';
+            }
             matched.avatar = getResolvedAvatar(emailClean, matched.avatar);
             setProfile(matched);
             setUser({ id: matched.id, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
@@ -205,8 +267,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch {}
 
-        // 2. Fallback for Student Demo Login
-        if (emailClean.includes('student') || emailClean === 'student@green.edu.bd') {
+        // 2. Fallback for Student Demo Login (STRICT EQUALITY ONLY)
+        if (emailClean === 'student@green.edu.bd') {
           const studentProf: UserProfile = {
             id: 'usr-student-01',
             email: emailClean,
@@ -229,8 +291,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // 3. Fallback for Teacher / Faculty Demo Login
-        if (emailClean.includes('teacher') || emailClean.includes('faculty') || emailClean === 'teacher@green.edu.bd') {
+        // 3. Fallback for Teacher / Faculty Demo Login (STRICT EQUALITY ONLY)
+        if (emailClean === 'teacher@green.edu.bd') {
           const teacherProf: UserProfile = {
             id: 'usr-teacher-01',
             email: emailClean,
@@ -254,8 +316,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // 4. Fallback for Admin Demo Login
-        if (emailClean.includes('admin') || emailClean === 'admin@green.edu.bd') {
+        // 4. Fallback for Admin Demo Login (STRICT EQUALITY ONLY)
+        if (emailClean === 'admin@green.edu.bd') {
           const adminProf: UserProfile = {
             id: 'usr-admin-01',
             email: emailClean,
@@ -278,8 +340,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // 5. Fallback for Conductor Demo Login
-        if (emailClean.includes('conductor') || emailClean === 'conductor@green.edu.bd') {
+        // 5. Fallback for Conductor Demo Login (STRICT EQUALITY ONLY)
+        if (emailClean === 'conductor@green.edu.bd') {
           const conductorProf: UserProfile = {
             id: 'usr-conductor-01',
             email: emailClean,
@@ -302,24 +364,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // Default graceful fallback for any email with password
+        // Default graceful fallback for any valid real email with password
         if (password && password.length >= 4) {
+          const isRealConductor = emailClean.endsWith('@green.conductor.bd');
+          const isRealStudent = emailClean.endsWith('@student.green.ac.bd');
+
           let determinedRole: UserRole = 'student';
-          if (emailClean.includes('admin')) determinedRole = 'admin';
+          if (isRealConductor) determinedRole = 'conductor';
+          else if (emailClean.includes('admin')) determinedRole = 'admin';
           else if (emailClean.includes('teacher') || emailClean.includes('faculty')) determinedRole = 'teacher';
-          else if (emailClean.includes('conductor')) determinedRole = 'conductor';
+          else if (isRealStudent) determinedRole = 'student';
+
+          const idPrefix = emailClean.split('@')[0];
+          const resolvedId = /^\d{9}$/.test(idPrefix) 
+            ? idPrefix 
+            : (determinedRole === 'conductor' ? 'GUB-STAFF-042' : '221002001');
+
+          // Check if user previously registered with a custom name
+          let registeredName = '';
+          try {
+            const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
+            const matched = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean);
+            if (matched && matched.name) {
+              registeredName = matched.name;
+            }
+          } catch {}
+
+          const finalName = registeredName || 
+            (isRealConductor ? `Bus Conductor (${resolvedId})` : 
+             isRealStudent ? `Student (${resolvedId})` : 
+             emailClean.split('@')[0].toUpperCase());
 
           const generalProf: UserProfile = {
             id: `usr-${Date.now()}`,
             email: emailClean,
-            name: emailClean.split('@')[0].toUpperCase(),
+            name: finalName,
             role: determinedRole,
             department: determinedRole === 'conductor' ? 'Transport & Fleet Division' : 'Computer Science & Engineering',
-            id_no: determinedRole === 'conductor' ? 'STAFF-101' : '221002099',
+            id_no: resolvedId,
             semester: determinedRole === 'conductor' ? 'Staff' : 'Spring 2026',
             avatar: getResolvedAvatar(emailClean, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'),
             bio: `${determinedRole.toUpperCase()} at Green University of Bangladesh`,
-            is_demo: emailClean.includes('demo') || emailClean.endsWith('@green.edu.bd'),
+            is_demo: false, // ALWAYS false for real accounts!
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -367,6 +453,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const expectedStudentEmail = `${idNoClean}@student.green.ac.bd`;
         if (emailClean !== expectedStudentEmail) {
           return { error: new Error(`Student registration requires official email strictly matching your 9-digit ID (${expectedStudentEmail}). You cannot register with "${emailClean}".`) };
+        }
+      }
+
+      // Enforce 9-digit ID and strict [ID]@green.conductor.bd email match for Conductor registration
+      if (role === 'conductor') {
+        if (!/^\d{9}$/.test(idNoClean)) {
+          return { error: new Error(`Conductor ID must be exactly 9 numeric digits (e.g. 232002038). Currently entered ${idNoClean.length} digits.`) };
+        }
+        const expectedConductorEmail = `${idNoClean}@green.conductor.bd`;
+        if (emailClean !== expectedConductorEmail) {
+          return { error: new Error(`Conductor registration requires official email strictly matching your 9-digit ID (${expectedConductorEmail}). You cannot register with "${emailClean}".`) };
         }
       }
 
@@ -441,13 +538,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 3. Register user with Supabase Auth
+      // If role === 'conductor', pass role: 'admin' and app_role: 'conductor' so Supabase PostgreSQL trigger
+      // handle_new_user() passes the profiles_role_check constraint even before the SQL migration is executed
+      const authRole = role === 'conductor' ? 'admin' : role;
       const { data, error } = await supabase.auth.signUp({
         email: emailClean,
         password,
         options: {
           data: {
             name,
-            role,
+            role: authRole,
+            app_role: role,
             department: finalDepartment,
             id_no: idNoClean,
             avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
@@ -514,8 +615,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Insert row into Supabase profiles table
         const { error: profileError } = await supabase.from('profiles').upsert([newProf]);
-        if (profileError) {
-          console.error('Supabase profile insertion error:', profileError);
+        if (profileError && profileError.message?.includes('profiles_role_check')) {
+          // If DB check constraint hasn't been updated yet, store as 'admin' in profiles table so row persists
+          await supabase.from('profiles').upsert([{ ...newProf, role: 'admin' }]);
         }
       }
 

@@ -48,7 +48,7 @@ export const translations = {
     placeholderNameStudent: 'Ahmed Sizan',
     placeholderNameConductor: 'e.g. Md. Rafiqul Islam (Conductor)',
     placeholderIdStudent: 'e.g. 232002038 (Exactly 9 digits)',
-    placeholderIdConductor: 'e.g. STAFF-042 or GUB-COND-01',
+    placeholderIdConductor: 'e.g. 232002038 (Exactly 9 digits)',
     placeholderIdTeacher: 'e.g. FAC-CSE-104',
     placeholderEmailLogin: 'user@green.edu.bd',
     placeholderEmailRegister: '232002038@student.green.ac.bd',
@@ -62,11 +62,22 @@ export const translations = {
     idChecking: 'Checking ID uniqueness...',
     idAlreadyTakenAlert: 'University ID ({id}) is already registered! You cannot create multiple accounts with the same ID. Please switch to Sign In.',
     
-    // Microsoft Email Specific Helpers
+    // Microsoft & Conductor Email Specific Helpers
     msTeamsNote: '* Green University students use official Microsoft 365 / Teams email ([ID]@student.green.ac.bd).',
+    conductorEmailNote: '* Green University bus conductors use official conductor email ([ID]@green.conductor.bd).',
+    labelConductorEmail: 'Conductor Email',
     msAutoFillChip: '⚡ Click to Auto-Fill: {email}',
     msAutoFillMatched: 'Matched ({email})',
     msEmailMismatchAlert: 'Student email must strictly match your 9-digit University ID Microsoft account: "{expected}". You cannot register with "{actual}".',
+    conductorEmailMismatchAlert: 'Conductor email must strictly match your 9-digit Staff ID: "{expected}". You cannot register with "{actual}".',
+
+    // Login Role Controls
+    loginRoleTitle: 'Log in as:',
+    loginRoleStudent: '🎓 Student',
+    loginRoleConductor: '🚌 Bus Conductor',
+    loginRoleGeneral: '🏛️ Faculty / Admin',
+    toastLoginStudentRule: 'Student login requires a 9-digit Student ID with @student.green.ac.bd (e.g. 232002038@student.green.ac.bd).',
+    toastLoginConductorRule: 'Conductor login requires a 9-digit Conductor ID with @green.conductor.bd (e.g. 232002038@green.conductor.bd).',
 
     // Buttons
     btnSignIn: 'Sign In',
@@ -92,8 +103,12 @@ export const translations = {
     toastSignUpFailed: 'Sign Up Failed',
     toastInvalidStudentIdTitle: 'Invalid Student ID',
     toastInvalidStudentIdMsg: 'Student ID must be exactly 9 numeric digits (e.g. 232002038). Currently entered: {count} digit(s).',
+    toastInvalidConductorIdTitle: 'Invalid Conductor ID',
+    toastInvalidConductorIdMsg: 'Conductor ID must be exactly 9 numeric digits (e.g. 232002038). Currently entered: {count} digit(s).',
     toastEmailMatchTitle: 'Email Must Match Student ID',
     toastEmailMatchMsg: 'Student email must match your 9-digit University ID exactly: "{expected}". You cannot open an account with "{actual}".',
+    toastConductorEmailMatchTitle: 'Email Must Match Conductor ID',
+    toastConductorEmailMatchMsg: 'Conductor email must match your 9-digit Conductor ID exactly: "{expected}". You cannot open an account with "{actual}".',
     toastIdTakenTitle: 'ID Already Registered',
     toastIdTakenMsg: 'University ID "{id}" is already registered ({owner}). Duplicate accounts with the same ID are strictly prohibited. Please switch to Sign In.',
 
@@ -196,7 +211,7 @@ export const translations = {
     placeholderNameStudent: 'যেমন: আহমেদ সিজান',
     placeholderNameConductor: 'যেমন: মো. রফিকুল ইসলাম (কন্ডাকটর)',
     placeholderIdStudent: 'যেমন: ২৩২০০২০৩৮ (ঠিক ৯টি সংখ্যা)',
-    placeholderIdConductor: 'যেমন: STAFF-042 বা GUB-COND-01',
+    placeholderIdConductor: 'যেমন: ২৩২০০২০৩৮ (ঠিক ৯টি সংখ্যা)',
     placeholderIdTeacher: 'যেমন: FAC-CSE-104',
     placeholderEmailLogin: 'user@green.edu.bd',
     placeholderEmailRegister: '232002038@student.green.ac.bd',
@@ -210,11 +225,22 @@ export const translations = {
     idChecking: 'আইডি যাচাই করা হচ্ছে...',
     idAlreadyTakenAlert: 'বিশ্ববিদ্যালয় আইডি ({id}) দিয়ে ইতিমধ্যে অ্যাকাউন্ট নিবন্ধিত রয়েছে! একই আইডি দিয়ে একাধিক অ্যাকাউন্ট খোলা সম্ভব নয়। দয়া করে সাইন ইন করুন।',
     
-    // Microsoft Email Specific Helpers
+    // Microsoft & Conductor Email Specific Helpers
     msTeamsNote: '* গ্রিন ইউনিভার্সিটির শিক্ষার্থীদের জন্য অফিসিয়াল মাইক্রোসফট ৩৬৫ / টিমস ইমেইল আবশ্যক ([ID]@student.green.ac.bd)।',
+    conductorEmailNote: '* গ্রিন ইউনিভার্সিটির বাস কন্ডাক্টরদের জন্য অফিসিয়াল কন্ডাক্টর ইমেইল আবশ্যক ([ID]@green.conductor.bd)।',
+    labelConductorEmail: 'কন্ডাক্টর ইমেইল',
     msAutoFillChip: '⚡ ১-ক্লিকে স্বয়ংক্রিয় পূরণ: {email}',
     msAutoFillMatched: 'মিলে গেছে ({email})',
     msEmailMismatchAlert: 'শিক্ষার্থী ইমেইল অবশ্যই আপনার ৯ ডিজিটের বিশ্ববিদ্যালয় আইডি ভিত্তিক মাইক্রোসফট অ্যাকাউন্টের সাথে মিলতে হবে: "{expected}"। আপনি "{actual}" দিয়ে অ্যাকাউন্ট খুলতে পারবেন না।',
+    conductorEmailMismatchAlert: 'কন্ডাক্টর ইমেইল অবশ্যই আপনার ৯ ডিজিটের স্টাফ আইডির সাথে মিলতে হবে: "{expected}"। আপনি "{actual}" দিয়ে অ্যাকাউন্ট খুলতে পারবেন না।',
+
+    // Login Role Controls
+    loginRoleTitle: 'লগইন ধরণ নির্বাচন করুন:',
+    loginRoleStudent: '🎓 শিক্ষার্থী',
+    loginRoleConductor: '🚌 বাস কন্ডাকটর',
+    loginRoleGeneral: '🏛️ শিক্ষক / প্রশাসন',
+    toastLoginStudentRule: 'ছাত্র/ছাত্রী লগইনের জন্য ৯ ডিজিটের আইডি এবং @student.green.ac.bd আবশ্যক (যেমন: 232002038@student.green.ac.bd)।',
+    toastLoginConductorRule: 'কন্ডাক্টর লগইনের জন্য ৯ ডিজিটের আইডি এবং @green.conductor.bd আবশ্যক (যেমন: 232002038@green.conductor.bd)।',
 
     // Buttons
     btnSignIn: 'সাইন ইন করুন',
@@ -240,8 +266,12 @@ export const translations = {
     toastSignUpFailed: 'রেজিস্ট্রেশন ব্যর্থ হয়েছে',
     toastInvalidStudentIdTitle: 'ভুল শিক্ষার্থী আইডি',
     toastInvalidStudentIdMsg: 'শিক্ষার্থী আইডি অবশ্যই ঠিক ৯ সংখ্যার হতে হবে (যেমন: ২৩২০০২০৩৮)। বর্তমানে দিয়েছেন: {count} ডিজিট।',
+    toastInvalidConductorIdTitle: 'ভুল কন্ডাক্টর আইডি',
+    toastInvalidConductorIdMsg: 'কন্ডাক্টর আইডি অবশ্যই ঠিক ৯ সংখ্যার হতে হবে (যেমন: ২৩২০০২০৩৮)। বর্তমানে দিয়েছেন: {count} ডিজিট।',
     toastEmailMatchTitle: 'ইমেইল অবশ্যই স্টুডেন্ট আইডির সাথে মিলতে হবে',
     toastEmailMatchMsg: 'শিক্ষার্থী ইমেইল আপনার ৯ ডিজিটের অফিসিয়াল মাইক্রোসফট আইডির সাথে মিলতে হবে: "{expected}"। আপনি "{actual}" দিয়ে অ্যাকাউন্ট খুলতে পারবেন না।',
+    toastConductorEmailMatchTitle: 'ইমেইল অবশ্যই কন্ডাক্টর আইডির সাথে মিলতে হবে',
+    toastConductorEmailMatchMsg: 'কন্ডাক্টর ইমেইল আপনার ৯ ডিজিটের অফিসিয়াল স্টাফ আইডির সাথে মিলতে হবে: "{expected}"। আপনি "{actual}" দিয়ে অ্যাকাউন্ট খুলতে পারবেন না।',
     toastIdTakenTitle: 'আইডি ইতিমধ্যে নিবন্ধিত',
     toastIdTakenMsg: 'বিশ্ববিদ্যালয় আইডি "{id}" দিয়ে ইতিমধ্যে অ্যাকাউন্ট নিবন্ধিত রয়েছে ({owner})। একই আইডি দিয়ে একাধিক অ্যাকাউন্ট খোলা সম্পূর্ণ নিষিদ্ধ। দয়া করে সাইন ইন করুন।',
 
