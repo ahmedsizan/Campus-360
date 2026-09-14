@@ -77,7 +77,15 @@ export const ConductorDashboard: React.FC = () => {
     return matchesLine && matchesStatus && matchesSearch;
   });
 
-  const pendingBookings = seatBookings.filter(b => (!b.status || b.status === 'pending'));
+  // Auto-focus manifest viewer to the bus that has incoming pending requests
+  React.useEffect(() => {
+    const pendingWithBus = seatBookings.find(b => (!b.status || b.status === 'pending') && b.bus_id);
+    if (pendingWithBus && pendingWithBus.bus_id && activeBusView !== pendingWithBus.bus_id) {
+      setActiveBusView(pendingWithBus.bus_id);
+    }
+  }, [seatBookings]);
+
+  const pendingBookings = filteredBookings.filter(b => (!b.status || b.status === 'pending'));
   const pendingCount = pendingBookings.length;
   const confirmedCount = seatBookings.filter(b => b.status === 'confirmed').length;
   const rejectedCount = seatBookings.filter(b => b.status === 'rejected').length;

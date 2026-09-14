@@ -123,6 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
+        localStorage.removeItem('gub_registered_accounts');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
 
@@ -130,59 +131,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session.user);
           await fetchProfile(session.user.email || '', session.user);
         } else {
-          // Check if local cache has an active logged-in user profile (e.g. conductor, student demo, or offline session)
+          // Check if local cache has an active logged-in demo user profile
           if (mounted) {
             const savedUser = localStorage.getItem('gub_user');
             if (savedUser) {
               try {
                 const parsed = JSON.parse(savedUser) as UserProfile;
-                if (parsed && parsed.email) {
-                  const pEmail = parsed.email.toLowerCase();
-
-                  // SELF-HEALING: Remove accidental demo status & demo name from real accounts
-                  if (pEmail.endsWith('@green.conductor.bd')) {
-                    parsed.is_demo = false;
-                    parsed.role = 'conductor';
-                    const idPart = pEmail.split('@')[0];
-                    if (/^\d{9}$/.test(idPart)) {
-                      parsed.id_no = idPart;
-                    }
-                    if (parsed.name === 'Md. Rafiqul Islam (Bus Conductor)' || !parsed.name) {
-                      try {
-                        const localReg = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
-                        const match = localReg.find(u => u.email?.toLowerCase() === pEmail);
-                        parsed.name = (match && match.name && match.name !== 'Md. Rafiqul Islam (Bus Conductor)') 
-                          ? match.name 
-                          : `Bus Conductor (${parsed.id_no || idPart})`;
-                      } catch {
-                        parsed.name = `Bus Conductor (${parsed.id_no || idPart})`;
-                      }
-                    }
-                    localStorage.setItem('gub_user', JSON.stringify(parsed));
-                  } else if (pEmail.endsWith('@student.green.ac.bd')) {
-                    parsed.is_demo = false;
-                    parsed.role = 'student';
-                    const idPart = pEmail.split('@')[0];
-                    if (/^\d{9}$/.test(idPart)) {
-                      parsed.id_no = idPart;
-                    }
-                    if (parsed.name === 'Ahmed Sizan') {
-                      try {
-                        const localReg = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
-                        const match = localReg.find(u => u.email?.toLowerCase() === pEmail);
-                        if (match && match.name && match.name !== 'Ahmed Sizan') {
-                          parsed.name = match.name;
-                        }
-                      } catch {}
-                    }
-                    localStorage.setItem('gub_user', JSON.stringify(parsed));
-                  }
-
+                if (parsed && parsed.is_demo && parsed.email) {
                   parsed.avatar = getResolvedAvatar(parsed.email, parsed.avatar);
                   setProfile(parsed);
                   setUser({ id: parsed.id, email: parsed.email, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
+                } else {
+                  // Stale or unauthenticated real account cache -> remove it
+                  localStorage.removeItem('gub_user');
                 }
-              } catch {}
+              } catch {
+                localStorage.removeItem('gub_user');
+              }
             }
           }
         }
@@ -225,50 +190,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        // 1. Check if user profile is already saved in localStorage
-        const savedUser = localStorage.getItem('gub_user');
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser) as UserProfile;
-            if (parsed.email && parsed.email.toLowerCase() === emailClean) {
-              if (emailClean.endsWith('@green.conductor.bd')) {
-                parsed.is_demo = false;
-                parsed.role = 'conductor';
-              } else if (emailClean.endsWith('@student.green.ac.bd')) {
-                parsed.is_demo = false;
-                parsed.role = 'student';
-              }
-              parsed.avatar = getResolvedAvatar(emailClean, parsed.avatar);
-              setProfile(parsed);
-              setUser({ id: parsed.id, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
-              localStorage.setItem('gub_user', JSON.stringify(parsed));
-              return { error: null };
-            }
-          } catch {}
-        }
-
-        // 1.1 Check in persistent registered accounts registry
-        try {
-          const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
-          const matched = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean);
-          if (matched) {
-            if (emailClean.endsWith('@green.conductor.bd')) {
-              matched.is_demo = false;
-              matched.role = 'conductor';
-            } else if (emailClean.endsWith('@student.green.ac.bd')) {
-              matched.is_demo = false;
-              matched.role = 'student';
-            }
-            matched.avatar = getResolvedAvatar(emailClean, matched.avatar);
-            setProfile(matched);
-            setUser({ id: matched.id, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
-            localStorage.setItem('gub_user', JSON.stringify(matched));
-            return { error: null };
-          }
-        } catch {}
-
-        // 2. Fallback for Student Demo Login (STRICT EQUALITY ONLY)
-        if (emailClean === 'student@green.edu.bd') {
+        // Strict Demo Sandbox Accounts (Only allowed with exact demo email AND exact demo password)
+        if (emailClean === 'student@green.edu.bd' && password === 'student123') {
           const studentProf: UserProfile = {
             id: 'usr-student-01',
             email: emailClean,
@@ -291,8 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // 3. Fallback for Teacher / Faculty Demo Login (STRICT EQUALITY ONLY)
-        if (emailClean === 'teacher@green.edu.bd') {
+        if (emailClean === 'teacher@green.edu.bd' && password === 'teacher123') {
           const teacherProf: UserProfile = {
             id: 'usr-teacher-01',
             email: emailClean,
@@ -316,8 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // 4. Fallback for Admin Demo Login (STRICT EQUALITY ONLY)
-        if (emailClean === 'admin@green.edu.bd') {
+        if (emailClean === 'admin@green.edu.bd' && password === 'admin123') {
           const adminProf: UserProfile = {
             id: 'usr-admin-01',
             email: emailClean,
@@ -340,8 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // 5. Fallback for Conductor Demo Login (STRICT EQUALITY ONLY)
-        if (emailClean === 'conductor@green.edu.bd') {
+        if (emailClean === 'conductor@green.edu.bd' && password === 'conductor123') {
           const conductorProf: UserProfile = {
             id: 'usr-conductor-01',
             email: emailClean,
@@ -364,58 +284,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { error: null };
         }
 
-        // Default graceful fallback for any valid real email with password
-        if (password && password.length >= 4) {
-          const isRealConductor = emailClean.endsWith('@green.conductor.bd');
-          const isRealStudent = emailClean.endsWith('@student.green.ac.bd');
-
-          let determinedRole: UserRole = 'student';
-          if (isRealConductor) determinedRole = 'conductor';
-          else if (emailClean.includes('admin')) determinedRole = 'admin';
-          else if (emailClean.includes('teacher') || emailClean.includes('faculty')) determinedRole = 'teacher';
-          else if (isRealStudent) determinedRole = 'student';
-
-          const idPrefix = emailClean.split('@')[0];
-          const resolvedId = /^\d{9}$/.test(idPrefix) 
-            ? idPrefix 
-            : (determinedRole === 'conductor' ? 'GUB-STAFF-042' : '221002001');
-
-          // Check if user previously registered with a custom name
-          let registeredName = '';
-          try {
-            const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
-            const matched = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean);
-            if (matched && matched.name) {
-              registeredName = matched.name;
-            }
-          } catch {}
-
-          const finalName = registeredName || 
-            (isRealConductor ? `Bus Conductor (${resolvedId})` : 
-             isRealStudent ? `Student (${resolvedId})` : 
-             emailClean.split('@')[0].toUpperCase());
-
-          const generalProf: UserProfile = {
-            id: `usr-${Date.now()}`,
-            email: emailClean,
-            name: finalName,
-            role: determinedRole,
-            department: determinedRole === 'conductor' ? 'Transport & Fleet Division' : 'Computer Science & Engineering',
-            id_no: resolvedId,
-            semester: determinedRole === 'conductor' ? 'Staff' : 'Spring 2026',
-            avatar: getResolvedAvatar(emailClean, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'),
-            bio: `${determinedRole.toUpperCase()} at Green University of Bangladesh`,
-            is_demo: false, // ALWAYS false for real accounts!
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          setProfile(generalProf);
-          setUser({ id: generalProf.id, email: emailClean, app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as any);
-          localStorage.setItem('gub_user', JSON.stringify(generalProf));
-          return { error: null };
-        }
-
-        return { error };
+        // STRICT AUTHENTICATION: All real users must have a valid registered account and correct password
+        return { error: new Error(error.message || 'Invalid login credentials. Please check your ID/Email and password.') };
       }
 
       if (data.user) {
@@ -469,42 +339,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const finalDepartment = role === 'conductor' ? 'Transport & Fleet Division' : department;
 
-      // 1. Check local registered accounts and demo IDs to prevent duplicate accounts
-      const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as UserProfile[];
-      const savedUserStr = localStorage.getItem('gub_user');
-      if (savedUserStr) {
-        try {
-          const p = JSON.parse(savedUserStr) as UserProfile;
-          if (p && p.id_no && !localRegistered.some(u => u.id_no?.toLowerCase() === p.id_no?.toLowerCase())) {
-            localRegistered.push(p);
-          }
-        } catch {}
-      }
-
+      // 1. Reserve Demo IDs and Demo Emails
       const demoAccounts = [
-        { id_no: '221002001', email: 'student@green.edu.bd', name: 'Ahmed Sizan (Student Demo)' },
-        { id_no: 'FAC-CSE-104', email: 'teacher@green.edu.bd', name: 'Dr. Mohammad Nazmul Islam (Faculty Demo)' },
-        { id_no: 'ADM-GUB-001', email: 'admin@green.edu.bd', name: 'System Administrator (Admin Demo)' },
-        { id_no: 'GUB-STAFF-042', email: 'conductor@green.edu.bd', name: 'Md. Rafiqul Islam (Conductor Demo)' }
+        { id_no: '221002001', email: 'student@green.edu.bd', name: 'Student Demo' },
+        { id_no: 'FAC-CSE-104', email: 'teacher@green.edu.bd', name: 'Faculty Demo' },
+        { id_no: 'ADM-GUB-001', email: 'admin@green.edu.bd', name: 'Admin Demo' },
+        { id_no: 'GUB-STAFF-042', email: 'conductor@green.edu.bd', name: 'Conductor Demo' }
       ];
 
-      // Block duplicate ID Number locally
-      const existingById = localRegistered.find(u => u.id_no && u.id_no.toLowerCase() === idNoClean.toLowerCase())
-        || demoAccounts.find(d => d.id_no.toLowerCase() === idNoClean.toLowerCase());
-
-      if (existingById) {
+      const demoById = demoAccounts.find(d => d.id_no.toLowerCase() === idNoClean.toLowerCase());
+      if (demoById) {
         return { 
-          error: new Error(`University ID "${idNoClean}" is already registered (${existingById.name || existingById.email}). You cannot create multiple accounts with the same ID. Please Sign In.`) 
+          error: new Error(`University ID "${idNoClean}" is reserved for Demo Sandbox. Please enter your official University ID.`) 
         };
       }
 
-      // Block duplicate Email Address locally
-      const existingByEmail = localRegistered.find(u => u.email && u.email.toLowerCase() === emailClean)
-        || demoAccounts.find(d => d.email.toLowerCase() === emailClean);
-
-      if (existingByEmail) {
+      const demoByEmail = demoAccounts.find(d => d.email.toLowerCase() === emailClean);
+      if (demoByEmail) {
         return { 
-          error: new Error(`An account with email "${emailClean}" is already registered. Please Sign In instead.`) 
+          error: new Error(`Email "${emailClean}" is reserved for Demo Sandbox. Please use your official university email.`) 
         };
       }
 
@@ -606,10 +459,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updated_at: new Date().toISOString()
         };
 
-        // Record into local registered accounts registry
-        localRegistered.push(newProf);
-        localStorage.setItem('gub_registered_accounts', JSON.stringify(localRegistered));
-
         setProfile(newProf);
         localStorage.setItem('gub_user', JSON.stringify(newProf));
 
@@ -630,6 +479,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Direct Supabase Auth Sign Out
   const signOut = async () => {
     localStorage.removeItem('gub_user');
+    localStorage.removeItem('gub_registered_accounts');
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);

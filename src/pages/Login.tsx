@@ -142,16 +142,7 @@ export const Login: React.FC = () => {
     if (!id) return false;
     const clean = id.trim().toLowerCase();
     const demoIds = ['221002001', 'fac-cse-104', 'adm-gub-001', 'gub-staff-042'];
-    if (demoIds.includes(clean)) return true;
-    try {
-      const localRegistered = JSON.parse(localStorage.getItem('gub_registered_accounts') || '[]') as { id_no?: string }[];
-      if (localRegistered.some(u => u.id_no && u.id_no.toLowerCase() === clean)) return true;
-    } catch {}
-    try {
-      const cur = JSON.parse(localStorage.getItem('gub_user') || '{}') as { id_no?: string };
-      if (cur?.id_no && cur.id_no.toLowerCase() === clean) return true;
-    } catch {}
-    return false;
+    return demoIds.includes(clean);
   };
 
   // Live check against local storage and Supabase cloud database as user types ID

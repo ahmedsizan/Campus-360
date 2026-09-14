@@ -339,9 +339,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ==========================================
   // 2.5 Bus Seat Bookings (Cloud Supabase + Realtime Cross-Device Sync)
   // Partitioned by is_demo (Demo Sandbox vs Real Live Passenger Bookings)
+  // Environment-scoped (Local Dev vs Production Live) to prevent localhost from intercepting production traffic
   // ==========================================
-  const getBookingStorageKey = (isDemoAccount?: boolean) => {
-    return isDemoAccount ? 'gub_bus_seat_bookings_demo' : 'gub_bus_seat_bookings_real';
+  const isLocalEnvironment = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.') || host.endsWith('.local');
+  };
+
+  const getRealtimeBusChannelName = (): string => {
+    return isLocalEnvironment() ? 'gub_bus_network_local' : 'gub_bus_network_live';
+  };
+
+  const getLocalBroadcastChannelName = (): string => {
+    return isLocalEnvironment() ? 'gub_bus_bc_local' : 'gub_bus_bc_live';
+  };
+
+  const getBookingStorageKey = (isDemoAccount?: boolean): string => {
+    const envPrefix = isLocalEnvironment() ? 'gub_dev_' : 'gub_prod_';
+    return isDemoAccount ? `${envPrefix}seat_bookings_demo` : `${envPrefix}seat_bookings_real`;
+  };
+
+  const getFallbackOrderPrefix = (): string => {
+    return isLocalEnvironment() ? 'bus-sync-dev-' : 'bus-sync-prod-';
   };
 
   const [seatBookings, setSeatBookings] = useState<BusSeatBooking[]>(() => {
@@ -368,76 +388,165 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [seatBookings, profile?.is_demo]);
 
-  // Two-Way Sync Engine: Merge cloud data with local data and backfill unsaved local data to cloud
-  const syncLocalBookingsToCloud = async (bookingsToSync: BusSeatBooking[]) => {
-    if (!bookingsToSync || bookingsToSync.length === 0) return;
+  // Resilient Cloud Storage Engine:
+  // Primary: public.bus_seat_bookings (native table)
+  // Backup: public.orders table with 'bus-sync-' prefix if bus_seat_bookings table hasn't been created yet
+  const saveBookingToCloud = async (booking: BusSeatBooking) => {
     try {
-      await supabase.from('bus_seat_bookings').upsert(bookingsToSync, { onConflict: 'id' });
+      const { error } = await supabase.from('bus_seat_bookings').upsert([booking], { onConflict: 'id' });
+      if (!error) return true;
+    } catch {}
+
+    // Graceful fallback to orders table backup
+    try {
+      const fallbackId = `${getFallbackOrderPrefix()}${booking.id}`;
+      await supabase.from('orders').upsert([{
+        id: fallbackId,
+        order_id: `BUS-${booking.token_id || booking.id}`,
+        items: [booking],
+        total_price: 0,
+        status: booking.status,
+        ordered_by: booking.user_email || 'bus-passenger@green.edu.bd',
+        date: booking.booking_date || new Date().toISOString().split('T')[0]
+      }], { onConflict: 'id' });
+      return true;
     } catch (e) {
-      console.warn('Cross-device backfill sync note:', e);
+      console.warn('Cloud booking fallback sync note:', e);
+      return false;
     }
+  };
+
+  const updateBookingInCloud = async (bookingId: string, status: 'pending' | 'confirmed' | 'rejected', notes?: string) => {
+    try {
+      const { error } = await supabase
+        .from('bus_seat_bookings')
+        .update({ status, conductor_notes: notes })
+        .eq('id', bookingId);
+      if (!error) return;
+    } catch {}
+
+    try {
+      const fallbackId = `${getFallbackOrderPrefix()}${bookingId}`;
+      const { data } = await supabase.from('orders').select('*').eq('id', fallbackId).maybeSingle();
+      if (data && data.items && data.items.length > 0) {
+        const item = { ...data.items[0], status, conductor_notes: notes };
+        await supabase.from('orders').update({ status, items: [item] }).eq('id', fallbackId);
+      }
+    } catch {}
+  };
+
+  const deleteBookingInCloud = async (bookingId: string) => {
+    try {
+      await supabase.from('bus_seat_bookings').delete().eq('id', bookingId);
+    } catch {}
+    try {
+      const fallbackId = `${getFallbackOrderPrefix()}${bookingId}`;
+      await supabase.from('orders').delete().eq('id', fallbackId);
+    } catch {}
+  };
+
+  const sendRealtimeBroadcast = async (event: string, payload: any) => {
+    const channel = crossDeviceChannelRef.current;
+    if (channel) {
+      try {
+        await channel.send({
+          type: 'broadcast',
+          event,
+          payload
+        });
+        return;
+      } catch {}
+    }
+
+    try {
+      const directCh = supabase.channel(getRealtimeBusChannelName());
+      directCh.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          directCh.send({ type: 'broadcast', event, payload });
+        }
+      });
+    } catch {}
   };
 
   const fetchSeatBookings = async () => {
     const isDemo = Boolean(profile?.is_demo);
     try {
+      let cloudBookings: BusSeatBooking[] = [];
       const { data, error } = await supabase
         .from('bus_seat_bookings')
         .select('*')
         .eq('is_demo', isDemo)
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setSeatBookings(prev => {
-          const bookingMap = new Map<string, BusSeatBooking>();
-          // 1. Load local cache matching current environment
-          prev.filter(b => Boolean(b.is_demo) === isDemo).forEach(b => {
-            if (b.id) bookingMap.set(b.id, b);
-          });
-          // 2. Overwrite with fresh cloud data
-          (data as BusSeatBooking[]).forEach(b => {
-            if (b.id) bookingMap.set(b.id, b);
-          });
+      if (!error && data && data.length > 0) {
+        cloudBookings = data as BusSeatBooking[];
+      } else {
+        // Check fallback orders table
+        const prefix = getFallbackOrderPrefix();
+        const { data: fallbackData } = await supabase
+          .from('orders')
+          .select('*')
+          .like('id', `${prefix}%`);
 
-          const merged = Array.from(bookingMap.values()).sort((a, b) => {
-            const timeA = new Date(a.created_at || '').getTime() || 0;
-            const timeB = new Date(b.created_at || '').getTime() || 0;
-            return timeB - timeA;
+        if (fallbackData && fallbackData.length > 0) {
+          fallbackData.forEach((row: any) => {
+            if (row.items && Array.isArray(row.items) && row.items[0]) {
+              const b = row.items[0] as BusSeatBooking;
+              if (Boolean(b.is_demo) === isDemo) {
+                cloudBookings.push(b);
+              }
+            }
           });
-
-          // Check if there are local bookings that were not in cloud
-          const cloudIds = new Set((data as BusSeatBooking[]).map(b => b.id));
-          const missingInCloud = prev.filter(b => Boolean(b.is_demo) === isDemo && !cloudIds.has(b.id));
-          if (missingInCloud.length > 0) {
-            syncLocalBookingsToCloud(missingInCloud);
-          }
-
-          try {
-            localStorage.setItem(getBookingStorageKey(isDemo), JSON.stringify(merged));
-          } catch {}
-          return merged;
-        });
-      } else if (error) {
-        console.warn('Supabase fetch seat bookings note:', error.message);
+        }
       }
+
+      setSeatBookings(prev => {
+        const bookingMap = new Map<string, BusSeatBooking>();
+        // 1. Keep cached bookings matching current environment
+        prev.filter(b => Boolean(b.is_demo) === isDemo).forEach(b => {
+          if (b.id) bookingMap.set(b.id, b);
+        });
+        // 2. Overwrite / merge fresh cloud data
+        cloudBookings.forEach(b => {
+          if (b.id) bookingMap.set(b.id, b);
+        });
+
+        const merged = Array.from(bookingMap.values()).sort((a, b) => {
+          const timeA = new Date(a.created_at || '').getTime() || 0;
+          const timeB = new Date(b.created_at || '').getTime() || 0;
+          return timeB - timeA;
+        });
+
+        // Sync local unsaved items up to cloud
+        const cloudIds = new Set(cloudBookings.map(b => b.id));
+        const missingInCloud = prev.filter(b => Boolean(b.is_demo) === isDemo && !cloudIds.has(b.id));
+        if (missingInCloud.length > 0) {
+          missingInCloud.forEach(b => saveBookingToCloud(b));
+        }
+
+        try {
+          localStorage.setItem(getBookingStorageKey(isDemo), JSON.stringify(merged));
+        } catch {}
+        return merged;
+      });
     } catch (err) {
-      console.warn('Seat bookings fetch error:', err);
+      console.warn('Seat bookings fetch note:', err);
     } finally {
       setLoadingSeatBookings(false);
     }
   };
 
-  // Real-time synchronization (Cross-Device Supabase Channel + BroadcastChannel + Postgres Changes + Sound Alerts)
+  // Real-time synchronization (Scoped Cross-Device Supabase Channel + BroadcastChannel + Postgres Changes + Sound Alerts)
   useEffect(() => {
     const currentIsDemo = Boolean(profile?.is_demo);
     const userRole = profile?.role;
-    const userEmail = profile?.email;
-    const studentId = profile?.id_no;
+    const userEmail = (profile?.email || '').toLowerCase().trim();
+    const studentId = (profile?.id_no || '').trim();
 
-    // 1. Local same-device BroadcastChannel (persistent ref)
+    // 1. Local same-device BroadcastChannel (persistent ref with scoped channel name)
     let localBc: BroadcastChannel | null = null;
     try {
-      localBc = new BroadcastChannel('gub_bus_realtime_channel');
+      localBc = new BroadcastChannel(getLocalBroadcastChannelName());
       broadcastChannelRef.current = localBc;
       localBc.onmessage = (event) => {
         const data = event.data;
@@ -457,12 +566,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return [incoming, ...prev];
           });
 
-          // Conductor real-time alert with sound
-          if (userRole === 'conductor' || userRole === 'admin') {
+          // Conductor real-time alert with sound (do NOT alert if sender is the same user)
+          const senderEmail = (incoming.user_email || '').toLowerCase().trim();
+          if ((userRole === 'conductor' || userRole === 'admin') && senderEmail !== userEmail) {
             playNotificationChime('request');
             addToast(
               'info',
-              `🔔 New Ticket Request: Token #${incoming.token_id || incoming.id.slice(0, 8)} from ${incoming.student_name} (${incoming.student_id}) — Seat #${incoming.seat_number}!`,
+              `🔔 New Ticket Request: Token #${incoming.token_id || incoming.id.slice(0, 8)} (${incoming.bus_name}) from ${incoming.student_name} (${incoming.student_id}) — Seat #${incoming.seat_number}!`,
               'Seat Request Received'
             );
           }
@@ -471,7 +581,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             prev.map(b => (b.id === data.bookingId || (b.token_id && b.token_id === data.token_id) ? { ...b, status: data.status, conductor_notes: data.notes } : b))
           );
           if (data.status === 'confirmed') {
-            const isMyBooking = (data.user_email && data.user_email === userEmail) || (data.student_id && data.student_id === studentId) || userRole === 'student';
+            const targetEmail = (data.user_email || '').toLowerCase().trim();
+            const targetId = (data.student_id || '').trim();
+            const isMyBooking = (targetEmail && userEmail && targetEmail === userEmail) || (targetId && studentId && targetId === studentId);
             if (isMyBooking) {
               playNotificationChime('confirmed');
               addToast('success', `✓ Conductor approved your bus pass (Token #${data.token_id || data.bookingId})! Seat #${data.seat_number || ''}`, 'Seat Pass Verified');
@@ -485,8 +597,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('BroadcastChannel not supported', e);
     }
 
-    // 2. Cross-Device Supabase Realtime Channel
-    const crossDeviceChannel = supabase.channel('gub_bus_live_network', {
+    // 2. Cross-Device Supabase Realtime Channel (scoped to local dev vs live prod)
+    const channelName = getRealtimeBusChannelName();
+    const crossDeviceChannel = supabase.channel(channelName, {
       config: {
         broadcast: { ack: true }
       }
@@ -504,12 +617,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return [incoming, ...prev];
         });
 
-        // Conductor real-time alert with sound
-        if (userRole === 'conductor' || userRole === 'admin') {
+        // Conductor real-time alert with sound (do NOT alert if sender is the same user)
+        const senderEmail = (incoming.user_email || '').toLowerCase().trim();
+        if ((userRole === 'conductor' || userRole === 'admin') && senderEmail !== userEmail) {
           playNotificationChime('request');
           addToast(
             'info',
-            `🔔 New Ticket Request: Token #${incoming.token_id || incoming.id.slice(0, 8)} from ${incoming.student_name} (${incoming.student_id}) — Seat #${incoming.seat_number}!`,
+            `🔔 New Ticket Request: Token #${incoming.token_id || incoming.id.slice(0, 8)} (${incoming.bus_name}) from ${incoming.student_name} (${incoming.student_id}) — Seat #${incoming.seat_number}!`,
             'Seat Request Received'
           );
         }
@@ -517,12 +631,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .on('broadcast', { event: 'STATUS_UPDATE' }, ({ payload }) => {
         if (!payload) return;
         if (payload.is_demo !== undefined && Boolean(payload.is_demo) !== currentIsDemo) return;
-        const { bookingId, token_id, status, notes, seat_number, user_email, student_id: payloadStudentId } = payload;
+        const { bookingId, token_id, status, notes, seat_number, user_email: bookingUserEmail, student_id: payloadStudentId } = payload;
         setSeatBookings(prev =>
           prev.map(b => (b.id === bookingId || (b.token_id && b.token_id === token_id) ? { ...b, status, conductor_notes: notes } : b))
         );
         if (status === 'confirmed') {
-          const isMyBooking = (user_email && user_email === userEmail) || (payloadStudentId && payloadStudentId === studentId) || userRole === 'student';
+          const targetEmail = (bookingUserEmail || '').toLowerCase().trim();
+          const targetId = (payloadStudentId || '').trim();
+          const isMyBooking = (targetEmail && userEmail && targetEmail === userEmail) || (targetId && studentId && targetId === studentId);
           if (isMyBooking) {
             playNotificationChime('confirmed');
             addToast('success', `✓ Conductor approved your bus pass (Token #${token_id || bookingId})! Seat #${seat_number || ''}`, 'Seat Pass Verified');
@@ -543,11 +659,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (prev.some(b => b.id === newBooking.id || (b.token_id && b.token_id === newBooking.token_id))) return prev;
             return [newBooking, ...prev];
           });
-          if (userRole === 'conductor' || userRole === 'admin') {
+          const senderEmail = (newBooking.user_email || '').toLowerCase().trim();
+          if ((userRole === 'conductor' || userRole === 'admin') && senderEmail !== userEmail) {
             playNotificationChime('request');
             addToast(
               'info',
-              `🔔 New Ticket Request: Token #${newBooking.token_id || newBooking.id.slice(0, 8)} from ${newBooking.student_name} (${newBooking.student_id}) — Seat #${newBooking.seat_number}!`,
+              `🔔 New Ticket Request: Token #${newBooking.token_id || newBooking.id.slice(0, 8)} (${newBooking.bus_name}) from ${newBooking.student_name} (${newBooking.student_id}) — Seat #${newBooking.seat_number}!`,
               'Seat Request Received'
             );
           }
@@ -558,7 +675,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             prev.map(b => (b.id === updatedBooking.id ? updatedBooking : b))
           );
           if (updatedBooking.status === 'confirmed') {
-            const isMyBooking = (updatedBooking.user_email && updatedBooking.user_email === userEmail) || (updatedBooking.student_id && updatedBooking.student_id === studentId) || userRole === 'student';
+            const targetEmail = (updatedBooking.user_email || '').toLowerCase().trim();
+            const targetId = (updatedBooking.student_id || '').trim();
+            const isMyBooking = (targetEmail && userEmail && targetEmail === userEmail) || (targetId && studentId && targetId === studentId);
             if (isMyBooking) {
               playNotificationChime('confirmed');
               addToast('success', `✓ Conductor approved your bus pass (Token #${updatedBooking.token_id || updatedBooking.id})! Seat #${updatedBooking.seat_number}`, 'Seat Pass Verified');
@@ -577,16 +696,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const detail = customEvent.detail;
       if (!detail) return;
       if (detail.type === 'NEW_BOOKING' && detail.booking) {
-        if (userRole === 'conductor' || userRole === 'admin') {
+        const senderEmail = (detail.booking.user_email || '').toLowerCase().trim();
+        if ((userRole === 'conductor' || userRole === 'admin') && senderEmail !== userEmail) {
           playNotificationChime('request');
           addToast(
             'info',
-            `🔔 New Ticket Request: Token #${detail.booking.token_id || detail.booking.id.slice(0, 8)} from ${detail.booking.student_name} (${detail.booking.student_id}) — Seat #${detail.booking.seat_number}!`,
+            `🔔 New Ticket Request: Token #${detail.booking.token_id || detail.booking.id.slice(0, 8)} (${detail.booking.bus_name}) from ${detail.booking.student_name} (${detail.booking.student_id}) — Seat #${detail.booking.seat_number}!`,
             'Seat Request Received'
           );
         }
       } else if (detail.type === 'STATUS_UPDATE' && detail.status === 'confirmed') {
-        const isMyBooking = (detail.user_email && detail.user_email === userEmail) || (detail.student_id && detail.student_id === studentId) || userRole === 'student';
+        const targetEmail = (detail.user_email || '').toLowerCase().trim();
+        const targetId = (detail.student_id || '').trim();
+        const isMyBooking = (targetEmail && userEmail && targetEmail === userEmail) || (targetId && studentId && targetId === studentId);
         if (isMyBooking) {
           playNotificationChime('confirmed');
           addToast('success', `✓ Conductor approved your bus pass (Token #${detail.token_id || detail.bookingId})!`, 'Seat Pass Verified');
@@ -674,56 +796,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return next;
     });
 
-    // 1. Cross-Device Supabase Broadcast
-    try {
-      if (crossDeviceChannelRef.current) {
-        crossDeviceChannelRef.current.send({
-          type: 'broadcast',
-          event: 'NEW_BOOKING',
-          payload: { ...fullBooking, is_demo: isDemo }
-        });
-      } else {
-        supabase.channel('gub_bus_live_network').send({
-          type: 'broadcast',
-          event: 'NEW_BOOKING',
-          payload: { ...fullBooking, is_demo: isDemo }
-        });
-      }
-    } catch (e) {
-      console.warn('Supabase cross-device broadcast error:', e);
-    }
+    // 1. Cross-Device Supabase Broadcast (isolated to local or prod channel)
+    await sendRealtimeBroadcast('NEW_BOOKING', { ...fullBooking, is_demo: isDemo });
 
     // 2. Same-Device BroadcastChannel (keep channel open)
     try {
       broadcastChannelRef.current?.postMessage({ type: 'NEW_BOOKING', booking: fullBooking, is_demo: isDemo });
     } catch {}
 
-    // 3. Same-window custom event (0ms instant trigger)
-    window.dispatchEvent(new CustomEvent('gub_bus_sync', { detail: { type: 'NEW_BOOKING', booking: fullBooking, is_demo: isDemo } }));
-
-    // 4. Soft audio chime for pending request placed
+    // 3. Audio chime for student placing request
     playNotificationChime('pending');
 
-    // 5. Upsert to Supabase Cloud Database
-    try {
-      const { error } = await supabase.from('bus_seat_bookings').upsert([fullBooking], { onConflict: 'id' });
-      if (error) {
-        console.warn('Supabase bus_seat_bookings upsert note:', error.message);
-      }
-      addToast(
-        'info',
-        `Seat #${fullBooking.seat_number} request submitted. Awaiting Conductor approval in real time! Token: ${fullBooking.token_id}`,
-        'Request Submitted (Pending)'
-      );
-      return { success: true, booking: fullBooking };
-    } catch {
-      addToast(
-        'info',
-        `Seat #${fullBooking.seat_number} request saved. Awaiting Conductor approval. Token: ${fullBooking.token_id}`,
-        'Request Submitted (Pending)'
-      );
-      return { success: true, booking: fullBooking };
-    }
+    // 4. Save to Cloud Database (with automatic fallback)
+    await saveBookingToCloud(fullBooking);
+
+    addToast(
+      'info',
+      `Seat #${fullBooking.seat_number} request submitted. Awaiting Conductor approval in real time! Token: ${fullBooking.token_id}`,
+      'Request Submitted (Pending)'
+    );
+    return { success: true, booking: fullBooking };
   };
 
   const updateSeatBookingStatus = async (
@@ -760,23 +852,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     // 1. Cross-Device Supabase Broadcast
-    try {
-      if (crossDeviceChannelRef.current) {
-        crossDeviceChannelRef.current.send({
-          type: 'broadcast',
-          event: 'STATUS_UPDATE',
-          payload: updatePayload
-        });
-      } else {
-        supabase.channel('gub_bus_live_network').send({
-          type: 'broadcast',
-          event: 'STATUS_UPDATE',
-          payload: updatePayload
-        });
-      }
-    } catch (e) {
-      console.warn('Cross-device status broadcast error:', e);
-    }
+    await sendRealtimeBroadcast('STATUS_UPDATE', updatePayload);
 
     // 2. Same-Device BroadcastChannel (keep channel open)
     try {
@@ -794,26 +870,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }));
 
-    // 4. Update Supabase Cloud Database
-    try {
-      const { error } = await supabase
-        .from('bus_seat_bookings')
-        .update({ status, conductor_notes: notes })
-        .eq('id', bookingId);
+    // 4. Update Cloud Database (with automatic fallback)
+    await updateBookingInCloud(bookingId, status, notes);
 
-      if (error) {
-        console.warn('Supabase bus booking status update note:', error.message);
-      }
-
-      if (status === 'confirmed') {
-        addToast('success', `Seat Token #${updatedBookingObj?.token_id || bookingId} approved! Verified by Conductor.`, 'Booking Confirmed');
-      } else if (status === 'rejected') {
-        addToast('warning', `Seat Token #${updatedBookingObj?.token_id || bookingId} request declined.`, 'Booking Declined');
-      }
-      return true;
-    } catch {
-      return true;
+    if (status === 'confirmed') {
+      addToast('success', `Seat Token #${updatedBookingObj?.token_id || bookingId} approved! Verified by Conductor.`, 'Booking Confirmed');
+    } else if (status === 'rejected') {
+      addToast('warning', `Seat Token #${updatedBookingObj?.token_id || bookingId} request declined.`, 'Booking Declined');
     }
+    return true;
   };
 
   const cancelSeatBooking = async (id: string): Promise<boolean> => {
@@ -827,21 +892,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     // 1. Cross-Device Supabase Broadcast
-    try {
-      if (crossDeviceChannelRef.current) {
-        crossDeviceChannelRef.current.send({
-          type: 'broadcast',
-          event: 'CANCEL_BOOKING',
-          payload: { bookingId: id, is_demo: isDemo }
-        });
-      } else {
-        supabase.channel('gub_bus_live_network').send({
-          type: 'broadcast',
-          event: 'CANCEL_BOOKING',
-          payload: { bookingId: id, is_demo: isDemo }
-        });
-      }
-    } catch {}
+    await sendRealtimeBroadcast('CANCEL_BOOKING', { bookingId: id, is_demo: isDemo });
 
     // 2. Same-Device BroadcastChannel
     try {
@@ -851,14 +902,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 3. Same-window custom event
     window.dispatchEvent(new CustomEvent('gub_bus_sync', { detail: { type: 'CANCEL_BOOKING', bookingId: id, is_demo: isDemo } }));
 
-    try {
-      await supabase.from('bus_seat_bookings').delete().eq('id', id);
-      addToast('info', 'Bus seat reservation cancelled.', 'Reservation Cancelled');
-      return true;
-    } catch {
-      addToast('info', 'Bus seat reservation cancelled.', 'Reservation Cancelled');
-      return true;
-    }
+    // 4. Delete from Cloud Database (with automatic fallback)
+    await deleteBookingInCloud(id);
+    addToast('info', 'Bus seat reservation cancelled.', 'Reservation Cancelled');
+    return true;
   };
 
   // ==========================================
